@@ -30,6 +30,7 @@ export default defineConfig({
     })
   ],
   server: {
-    allowedHosts: ['academia.149.50.130.160.nip.io', 'localhost']
+    host: '0.0.0.0',
+    allowedHosts: true
   }
 })
