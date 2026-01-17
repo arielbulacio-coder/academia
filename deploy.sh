@@ -11,13 +11,21 @@ echo "[1/4] Descargando últimos cambios..."
 git pull origin main
 
 echo "[2/4] Deteniendo contenedores antiguos y limpiando conflictos..."
-docker compose down
-# Intentamos matar a traefik si existe para liberar el puerto 80
-docker rm -f traefik 2>/dev/null || true
-# Limpiamos redes huerfanas
-docker network prune -f
+# Detener servicios del host que puedan usar el puerto 80
+systemctl stop nginx 2>/dev/null || true
+systemctl stop apache2 2>/dev/null || true
+systemctl stop httpd 2>/dev/null || true
 
-echo "[3/4] Limpiando caché de Docker (opcional pero recomendado)..."
+# Detener TODOS los contenedores Docker para evitar conflictos de puertos
+if [ -n "$(docker ps -aq)" ]; then
+    echo "Deteniendo todos los contenedores Docker..."
+    docker stop $(docker ps -aq)
+    docker rm $(docker ps -aq)
+fi
+
+# Limpieza profunda
+docker system prune -f
+docker network prune -f
 docker system prune -f
 
 echo "[4/4] Reconstruyendo y levantando servicios..."
