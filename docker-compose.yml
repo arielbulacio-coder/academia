@@ -7,17 +7,16 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - web
+      - default
 
   auth-service:
     build: ./backend/auth-service
     container_name: academia_auth
-    ports:
-      - "3001:3001"
     environment:
       - PORT=3001
       - DB_HOST=postgres
@@ -26,15 +25,17 @@ services:
       - DB_NAME=academia_auth
     depends_on:
       - postgres
-    volumes:
-      - ./backend/auth-service:/usr/src/app
-      - /usr/src/app/node_modules
+    networks:
+      - web
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`auth.149.50.130.160.nip.io`)"
+      - "traefik.http.services.auth.loadbalancer.server.port=3001"
 
   courses-service:
     build: ./backend/courses-service
     container_name: academia_courses
-    ports:
-      - "3002:3002"
     environment:
       - PORT=3002
       - DB_HOST=postgres
@@ -43,20 +44,30 @@ services:
       - DB_NAME=academia_courses
     depends_on:
       - postgres
-    volumes:
-      - ./backend/courses-service:/usr/src/app
-      - /usr/src/app/node_modules
+    networks:
+      - web
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.courses.rule=Host(`courses.149.50.130.160.nip.io`)"
+      - "traefik.http.services.courses.loadbalancer.server.port=3002"
 
   frontend:
     build: ./frontend
     container_name: academia_frontend
-    ports:
-      - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:3001
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - VITE_API_URL=http://auth.149.50.130.160.nip.io
+    networks:
+      - web
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`academia.149.50.130.160.nip.io`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+
+networks:
+  web:
+    external: true
 
 volumes:
   postgres_data:
