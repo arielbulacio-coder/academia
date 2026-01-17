@@ -14,6 +14,9 @@ function App() {
           <p>El sistema se está ejecutando correctamente.</p>
         </div>
       </main>
+      <footer style={{ marginTop: '2rem', fontSize: '0.8rem', opacity: 0.7 }}>
+        Build: {typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : 'Local Dev'}
+      </footer>
     </div>
   )
 }

@@ -32,5 +32,8 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     allowedHosts: ['academia.149.50.130.160.nip.io', 'localhost', '.nip.io']
+  },
+  define: {
+    '__BUILD_DATE__': JSON.stringify(new Date().toISOString())
   }
 })
