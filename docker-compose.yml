@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: academia_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+
+  auth-service:
+    build: ./backend/auth-service
+    container_name: academia_auth
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=academia_auth
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/auth-service:/usr/src/app
+      - /usr/src/app/node_modules
+
+  courses-service:
+    build: ./backend/courses-service
+    container_name: academia_courses
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=academia_courses
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/courses-service:/usr/src/app
+      - /usr/src/app/node_modules
+
+  frontend:
+    build: ./frontend
+    container_name: academia_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
