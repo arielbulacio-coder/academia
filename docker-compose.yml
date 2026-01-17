@@ -52,9 +52,9 @@ services:
   frontend:
     build:
       context: ./frontend
+      # Usamos sintaxis de mapa clave-valor para mayor compatibilidad
       args:
-        # Aquí definimos la IP pública de tu servidor para que React sepa dónde pedir datos
-        - VITE_API_URL=http://149.50.130.160:3001
+        VITE_API_URL: "http://149.50.130.160:3001"
     container_name: academia_frontend
     restart: always
     ports:
