@@ -28,12 +28,7 @@ services:
       - postgres
     networks:
       - default
-      - web # Conexión a Traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=web"
-      - "traefik.http.routers.academia-auth.rule=Host(`auth.149.50.130.160.nip.io`)"
-      - "traefik.http.services.academia-auth.loadbalancer.server.port=3001"
+      - web # Conexión al Proxy
 
   courses-service:
     build: ./backend/courses-service
@@ -49,29 +44,19 @@ services:
       - postgres
     networks:
       - default
-      - web # Conexión a Traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=web"
-      - "traefik.http.routers.academia-courses.rule=Host(`courses.149.50.130.160.nip.io`)"
-      - "traefik.http.services.academia-courses.loadbalancer.server.port=3002"
+      - web # Conexión al Proxy
 
   frontend:
     build:
       context: ./frontend
-      # Ahora apuntamos al subdominio gestionado por Traefik, no al puerto directo
+      # El frontend apunta al dominio público del Auth Service
       args:
         VITE_API_URL: "http://auth.149.50.130.160.nip.io"
     container_name: academia_frontend
     restart: always
     networks:
       - default
-      - web # Conexión a Traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=web"
-      - "traefik.http.routers.academia-frontend.rule=Host(`academia.149.50.130.160.nip.io`)"
-      - "traefik.http.services.academia-frontend.loadbalancer.server.port=80"
+      - web # Conexión al Proxy
 
 networks:
   web:

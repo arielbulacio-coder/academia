@@ -14,9 +14,13 @@ echo "[2/5] Configurando Infraestructura de Red..."
 # Crear red externa 'web' si no existe
 docker network create web 2>/dev/null || true
 
-echo "[3/5] Desplegando Portero (Traefik)..."
-# Aseguramos que Traefik esté corriendo primero
-cd traefik
+echo "[3/5] Desplegando Portero (Nginx Manual)..."
+# Limpiar portero antiguo si existe
+docker stop traefik 2>/dev/null || true
+docker rm traefik 2>/dev/null || true
+
+# Levantar nuevo portero
+cd proxy
 docker compose up -d --force-recreate
 cd ..
 
