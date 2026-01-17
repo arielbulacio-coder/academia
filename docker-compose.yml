@@ -31,6 +31,7 @@ services:
       - web # Conexión a Traefik
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=web"
       - "traefik.http.routers.academia-auth.rule=Host(`auth.149.50.130.160.nip.io`)"
       - "traefik.http.services.academia-auth.loadbalancer.server.port=3001"
 
@@ -51,6 +52,7 @@ services:
       - web # Conexión a Traefik
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=web"
       - "traefik.http.routers.academia-courses.rule=Host(`courses.149.50.130.160.nip.io`)"
       - "traefik.http.services.academia-courses.loadbalancer.server.port=3002"
 
@@ -67,6 +69,7 @@ services:
       - web # Conexión a Traefik
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=web"
       - "traefik.http.routers.academia-frontend.rule=Host(`academia.149.50.130.160.nip.io`)"
       - "traefik.http.services.academia-frontend.loadbalancer.server.port=80"
 

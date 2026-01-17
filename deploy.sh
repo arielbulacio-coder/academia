@@ -17,7 +17,7 @@ docker network create web 2>/dev/null || true
 echo "[3/5] Desplegando Portero (Traefik)..."
 # Aseguramos que Traefik esté corriendo primero
 cd traefik
-docker compose up -d
+docker compose up -d --force-recreate
 cd ..
 
 echo "[4/5] Limpiando caché de Aplicación..."
