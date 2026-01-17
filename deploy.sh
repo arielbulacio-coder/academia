@@ -10,8 +10,12 @@ echo "==========================================="
 echo "[1/4] Descargando últimos cambios..."
 git pull origin main
 
-echo "[2/4] Deteniendo contenedores antiguos..."
+echo "[2/4] Deteniendo contenedores antiguos y limpiando conflictos..."
 docker compose down
+# Intentamos matar a traefik si existe para liberar el puerto 80
+docker rm -f traefik 2>/dev/null || true
+# Limpiamos redes huerfanas
+docker network prune -f
 
 echo "[3/4] Limpiando caché de Docker (opcional pero recomendado)..."
 docker system prune -f
