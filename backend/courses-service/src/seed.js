@@ -1,92 +1,68 @@
 const sequelize = require('./db');
 const Curso = require('./models/Curso');
-const Materia = require('./models/Materia');
 const Unidad = require('./models/Unidad');
 const Material = require('./models/Material');
 const Actividad = require('./models/Actividad');
+const Inscripcion = require('./models/Inscripcion');
 
 const seedData = async () => {
     await sequelize.sync({ force: true });
 
-    // 1. Curso Principal
+    // 1. Curso: Aplicaciones de Electrónica Digital
     const cursoDigital = await Curso.create({
         nombre: 'Aplicaciones de Electrónica Digital',
-        division: 'A',
-        anio: 6,
-        descripcion: 'Curso avanzado de electrónica digital y microcontroladores. Profesor: Ariel Bulacio'
+        descripcion: 'Curso avanzado de electrónica digital, microcontroladores y sistemas embebidos. Instructor: Ariel Bulacio',
+        imagen: 'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
     });
 
-    // Otros cursos de relleno
-    await Curso.bulkCreate([
-        { nombre: '1° Año', division: 'A', anio: 1, descripcion: 'Ciclo Básico' },
-        { nombre: '2° Año', division: 'A', anio: 2, descripcion: 'Ciclo Básico' },
-        { nombre: '3° Año', division: 'A', anio: 3, descripcion: 'Ciclo Básico' },
-        { nombre: '4° Año', division: 'Informática', anio: 4, descripcion: 'Especialización' },
-    ]);
-
-    // 2. Unidades del Curso Digital
     const unidad1 = await Unidad.create({
-        titulo: 'Unidad 1: Fundamentos de Lógica Digital',
-        descripcion: 'Repaso de compuertas lógicas y álgebra de Boole.',
+        titulo: 'Unidad 1: Fundamentos',
+        descripcion: 'Repaso de lógica digital',
         orden: 1,
         CursoId: cursoDigital.id
     });
 
     const unidad2 = await Unidad.create({
-        titulo: 'Unidad 2: Microcontroladores',
-        descripcion: 'Arquitectura de microcontroladores y programación básica.',
+        titulo: 'Unidad 2: Arduino y Microcontroladores',
+        descripcion: 'Programación en C++',
         orden: 2,
         CursoId: cursoDigital.id
     });
 
-    // 3. Materiales
-    await Material.bulkCreate([
-        {
-            titulo: 'Guía de Compuertas Lógicas',
-            tipo: 'pdf',
-            contenido: 'https://example.com/guia-logica.pdf',
-            descripcion: 'Documento PDF con la teoría básica.',
-            UnidadId: unidad1.id
-        },
-        {
-            titulo: 'Video Introductorio',
-            tipo: 'video',
-            contenido: 'https://youtube.com/watch?v=example',
-            descripcion: 'Clase grabada sobre álgebra de Boole.',
-            UnidadId: unidad1.id
-        },
-        {
-            titulo: 'Datasheet ATMega328p',
-            tipo: 'pdf',
-            contenido: 'https://example.com/datasheet.pdf',
-            UnidadId: unidad2.id
-        }
-    ]);
+    await Material.create({
+        titulo: 'DataSheet Atmega328',
+        tipo: 'pdf',
+        UnidadId: unidad1.id
+    });
 
-    // 4. Actividades
-    await Actividad.bulkCreate([
-        {
-            titulo: 'TP N°1: Simplificación de Funciones',
-            tipo: 'entrega',
-            consigna: 'Resolver los ejercicios de la página 10 a 15 de la guía y subir el PDF.',
-            fechaEntrega: new Date('2026-03-15'),
-            UnidadId: unidad1.id
-        },
-        {
-            titulo: 'Cuestionario de Arquitectura',
-            tipo: 'formulario',
-            consigna: 'Responder las preguntas sobre arquitectura Harvard vs Von Neumann.',
-            UnidadId: unidad2.id
-        }
-    ]);
+    await Actividad.create({
+        titulo: 'TP 1: Semáforo Inteligente',
+        tipo: 'entrega',
+        fechaEntrega: new Date('2026-05-20'),
+        UnidadId: unidad2.id
+    });
 
-    // Materias Base
-    await Materia.bulkCreate([
-        { nombre: 'Matemática', anio: 6, tipo: 'teoria' },
-        { nombre: 'Electrónica Aplicada', anio: 6, tipo: 'taller' },
-    ]);
+    // Validar Inscripción de Alumno (alumno@academia.com)
+    await Inscripcion.create({
+        alumnoEmail: 'alumno@academia.com',
+        CursoId: cursoDigital.id,
+        calificacionFinal: 8.5
+    });
 
-    console.log('Courses seeded successfully with full structure!');
+    // 2. Otros Cursos
+    await Curso.create({
+        nombre: 'Manipulación de Alimentos',
+        descripcion: 'Normas de higiene y seguridad para el manejo de alimentos.',
+        imagen: 'https://images.unsplash.com/photo-1556910103-1c02745a30bf?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    });
+
+    await Curso.create({
+        nombre: 'Maestro Pizzero Rotisero',
+        descripcion: 'Técnicas profesionales para pizzas y rotisería.',
+        imagen: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+    });
+
+    console.log('Courses seeded successfully with new structure!');
 };
 
 seedData().then(() => process.exit()).catch(err => console.error(err));

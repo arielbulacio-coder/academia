@@ -3,11 +3,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 const sequelize = require('./db');
 const Curso = require('./models/Curso');
-const Materia = require('./models/Materia');
-const Alumno = require('./models/Alumno');
 const Unidad = require('./models/Unidad');
 const Material = require('./models/Material');
 const Actividad = require('./models/Actividad');
+const Inscripcion = require('./models/Inscripcion');
 
 const app = express();
 const port = process.env.PORT || 3002;
@@ -18,7 +17,7 @@ app.use(express.json());
 
 // --- ROUTES ---
 
-// Cursos
+// 1. Cursos Publicos / Generales
 app.get('/cursos', async (req, res) => {
     try {
         const cursos = await Curso.findAll({
@@ -27,7 +26,7 @@ app.get('/cursos', async (req, res) => {
                 include: [Material, Actividad]
             }],
             order: [
-                ['anio', 'ASC'],
+                ['nombre', 'ASC'],
                 [Unidad, 'orden', 'ASC']
             ]
         });
@@ -37,13 +36,27 @@ app.get('/cursos', async (req, res) => {
     }
 });
 
+app.post('/cursos', async (req, res) => {
+    try {
+        const curso = await Curso.create(req.body);
+        res.status(201).json(curso);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 app.get('/cursos/:id', async (req, res) => {
     try {
         const curso = await Curso.findByPk(req.params.id, {
-            include: [{
-                model: Unidad,
-                include: [Material, Actividad]
-            }],
+            include: [
+                {
+                    model: Unidad,
+                    include: [Material, Actividad]
+                },
+                {
+                    model: Inscripcion
+                }
+            ],
             order: [[Unidad, 'orden', 'ASC']]
         });
         if (!curso) return res.status(404).json({ message: 'Curso no encontrado' });
@@ -53,13 +66,44 @@ app.get('/cursos/:id', async (req, res) => {
     }
 });
 
-// Materias
-app.get('/materias', async (req, res) => {
+app.put('/cursos/:id', async (req, res) => {
     try {
-        const materias = await Materia.findAll();
-        res.json(materias);
+        await Curso.update(req.body, {
+            where: { id: req.params.id }
+        });
+        res.json({ message: 'Curso actualizado' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.delete('/cursos/:id', async (req, res) => {
+    try {
+        await Curso.destroy({ where: { id: req.params.id } });
+        res.json({ message: 'Curso eliminado' });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Inscripciones / Alumnos
+app.post('/inscripciones', async (req, res) => {
+    try {
+        // Recibe { CursoId, alumnoEmail }
+        const inscripcion = await Inscripcion.create(req.body);
+        res.status(201).json(inscripcion);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.put('/inscripciones/:id', async (req, res) => {
+    try {
+        // Para actualizar calificacionFinal
+        await Inscripcion.update(req.body, { where: { id: req.params.id } });
+        res.json({ message: 'Inscripción actualizada' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

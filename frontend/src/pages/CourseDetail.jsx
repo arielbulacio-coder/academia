@@ -1,44 +1,72 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud } from 'lucide-react';
+import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud, Users, GraduationCap, X } from 'lucide-react';
 
 const CourseDetail = ({ user }) => {
     const { id } = useParams();
     const [curso, setCurso] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeUnit, setActiveUnit] = useState(null);
+    const [activeTab, setActiveTab] = useState('contenidos'); // contenidos, alumnos
+    const [showEnrollModal, setShowEnrollModal] = useState(false);
 
-    // Mock upload function
-    const handleUpload = (type) => {
-        alert(`Simulando subida de ${type}... (En desarrollo)`);
+    // State for enrolling student
+    const [enrollEmail, setEnrollEmail] = useState('');
+    const [enrollLoading, setEnrollLoading] = useState(false);
+
+    const isInstructor = user?.role === 'profesor' || user?.role === 'admin' || user?.role === 'director';
+
+    const getBaseUrl = () => {
+        let url = 'http://localhost:3002';
+        if (import.meta.env.VITE_API_URL) {
+            url = import.meta.env.VITE_API_URL.replace('auth', 'courses');
+        }
+        return url;
+    }
+
+    const fetchCurso = async () => {
+        try {
+            const res = await fetch(`${getBaseUrl()}/cursos/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setCurso(data);
+            }
+        } catch (error) {
+            console.error("Error fetching course", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
-        const fetchCurso = async () => {
-            let url = `http://localhost:3002/cursos/${id}`;
-            if (import.meta.env.VITE_API_URL) {
-                // Replace 'auth' subdomain with 'courses' if present for production structure
-                // Assumes VITE_API_URL is like http://auth.domain.com
-                url = import.meta.env.VITE_API_URL.replace('auth', 'courses') + `/cursos/${id}`;
-            }
-
-            try {
-                const res = await fetch(url);
-                if (res.ok) {
-                    const data = await res.json();
-                    setCurso(data);
-                }
-            } catch (error) {
-                console.error("Error fetching course", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchCurso();
     }, [id]);
 
-    const isInstructor = user?.role === 'profesor' || user?.role === 'admin';
+    const handleEnrollStudent = async (e) => {
+        e.preventDefault();
+        setEnrollLoading(true);
+        try {
+            const res = await fetch(`${getBaseUrl()}/inscripciones`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    CursoId: id,
+                    alumnoEmail: enrollEmail
+                })
+            });
+            if (res.ok) {
+                alert('Alumno inscripto correctamente');
+                setEnrollEmail('');
+                setShowEnrollModal(false);
+                fetchCurso(); // Refresh list
+            } else {
+                alert('Error al inscribir alumno');
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setEnrollLoading(false);
+        }
+    };
 
     if (loading) return <div className="text-white p-8">Cargando aula virtual...</div>;
     if (!curso) return <div className="text-white p-8">Curso no encontrado.</div>;
@@ -53,116 +81,181 @@ const CourseDetail = ({ user }) => {
     };
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-8 mb-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                    <CheckSquare className="w-32 h-32 text-white" />
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto">
+            {/* Hero Header */}
+            <div className="relative rounded-2xl overflow-hidden mb-8 min-h-[250px] flex items-end">
+                <div className="absolute inset-0">
+                    <img src={curso.imagen || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97"} className="w-full h-full object-cover" alt="Cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
                 </div>
-                <div className="relative z-10">
-                    <span className="inline-block px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase mb-2">
-                        Año {curso.anio} • Division {curso.division}
+                <div className="relative z-10 p-8 w-full">
+                    <span className="inline-block px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold uppercase mb-2 border border-purple-500/30">
+                        Curso
                     </span>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{curso.nombre}</h1>
-                    <p className="text-slate-400 max-w-2xl">{curso.descripcion}</p>
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 shadow-sm">{curso.nombre}</h1>
+                    <p className="text-slate-300 max-w-2xl text-lg">{curso.descripcion}</p>
+                </div>
+            </div>
 
+            {/* Navigation Tabs */}
+            <div className="flex gap-6 mb-8 border-b border-white/10 px-4">
+                <button
+                    onClick={() => setActiveTab('contenidos')}
+                    className={`pb-4 px-2 font-medium transition-all relative ${activeTab === 'contenidos' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                    Contenidos
+                    {activeTab === 'contenidos' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500 rounded-t-full"></span>}
+                </button>
+                {isInstructor && (
+                    <button
+                        onClick={() => setActiveTab('alumnos')}
+                        className={`pb-4 px-2 font-medium transition-all relative ${activeTab === 'alumnos' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                    >
+                        Alumnos e Inscripciones
+                        {activeTab === 'alumnos' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500 rounded-t-full"></span>}
+                    </button>
+                )}
+            </div>
+
+            {/* TAB: CONTENIDOS */}
+            {activeTab === 'contenidos' && (
+                <div className="space-y-6">
+                    {/* Instructor Actions */}
                     {isInstructor && (
-                        <div className="mt-6 flex gap-3">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium">
+                        <div className="flex gap-3 mb-6">
+                            <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium shadow-lg shadow-purple-900/20">
                                 <PlusCircle className="w-4 h-4" />
                                 Nueva Unidad
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-medium">
-                                <UploadCloud className="w-4 h-4" />
-                                Gestionar Alumnos
-                            </button>
                         </div>
                     )}
-                </div>
-            </div>
 
-            {/* Units Content */}
-            <div className="space-y-6">
-                {curso.Unidads && curso.Unidads.map((unidad) => (
-                    <div key={unidad.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
-                            <div>
-                                <h3 className="text-xl font-semibold text-white">{unidad.titulo}</h3>
-                                {unidad.descripcion && <p className="text-slate-400 text-sm mt-1">{unidad.descripcion}</p>}
+                    {curso.Unidads && curso.Unidads.map((unidad) => (
+                        <div key={unidad.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                            <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white tracking-tight">{unidad.titulo}</h3>
+                                    {unidad.descripcion && <p className="text-slate-400 text-sm mt-0.5">{unidad.descripcion}</p>}
+                                </div>
+                                {isInstructor && (
+                                    <div className="flex gap-2">
+                                        <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Subir Material"><UploadCloud className="w-4 h-4" /></button>
+                                        <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Crear Actividad"><CheckSquare className="w-4 h-4" /></button>
+                                    </div>
+                                )}
                             </div>
-                            {isInstructor && (
-                                <div className="flex gap-2">
-                                    <button title="Subir Material" onClick={() => handleUpload('material')} className="p-2 hover:bg-white/10 rounded-lg text-cyan-400 transition-colors">
-                                        <UploadCloud className="w-5 h-5" />
-                                    </button>
-                                    <button title="Nueva Actividad" onClick={() => handleUpload('actividad')} className="p-2 hover:bg-white/10 rounded-lg text-purple-400 transition-colors">
-                                        <PlusCircle className="w-5 h-5" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
 
-                        <div className="p-6 space-y-4">
-                            {/* Materiales */}
-                            {unidad.Materials && unidad.Materials.length > 0 && (
-                                <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Material de Estudio</h4>
-                                    {unidad.Materials.map(mat => (
-                                        <div key={mat.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer border border-transparent hover:border-white/5">
-                                            <div className="p-2 bg-slate-800 rounded-lg">
-                                                {getIcon(mat.tipo)}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h5 className="text-white font-medium group-hover:text-cyan-300 transition-colors">{mat.titulo}</h5>
-                                                {mat.descripcion && <p className="text-xs text-slate-500">{mat.descripcion}</p>}
-                                            </div>
-                                            <button className="text-xs px-3 py-1 bg-white/5 hover:bg-white/10 rounded text-slate-300">
-                                                Ver
-                                            </button>
+                            <div className="p-5 space-y-3">
+                                {unidad.Materials?.map(mat => (
+                                    <div key={mat.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group cursor-pointer">
+                                        <div className="p-2 bg-slate-900 rounded-lg border border-white/5">
+                                            {getIcon(mat.tipo)}
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Actividades */}
-                            {unidad.Actividads && unidad.Actividads.length > 0 && (
-                                <div className="mt-6 space-y-2">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Actividades y Evaluaciones</h4>
-                                    {unidad.Actividads.map(act => (
-                                        <div key={act.id} className="flex items-center gap-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/10 hover:border-purple-500/30 transition-colors">
-                                            <div className="p-2 bg-purple-500/10 rounded-lg">
-                                                <CheckSquare className="w-5 h-5 text-purple-400" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h5 className="text-white font-medium">{act.titulo}</h5>
-                                                <p className="text-xs text-purple-300/70">
-                                                    {act.tipo === 'formulario' ? 'Cuestionario Online' : 'Entrega de Trabajo'}
-                                                    {act.fechaEntrega && ` • Vence: ${new Date(act.fechaEntrega).toLocaleDateString()}`}
-                                                </p>
-                                            </div>
-                                            {isInstructor ? (
-                                                <button className="text-xs px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded">
-                                                    Calificar
-                                                </button>
-                                            ) : (
-                                                <button className="text-xs px-3 py-1 bg-purple-500 hover:bg-purple-400 text-white rounded font-medium">
-                                                    Realizar
-                                                </button>
-                                            )}
+                                        <div>
+                                            <h5 className="text-white font-medium text-sm group-hover:text-purple-300 transition-colors">{mat.titulo}</h5>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider">{mat.tipo}</p>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {(!unidad.Materials?.length && !unidad.Actividads?.length) && (
-                                <div className="text-center py-6 text-slate-500 text-sm italic">
-                                    No hay contenido disponible en esta unidad todavía.
-                                </div>
-                            )}
+                                    </div>
+                                ))}
+                                {unidad.Actividads?.map(act => (
+                                    <div key={act.id} className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-transparent border-l-2 border-purple-500">
+                                        <CheckSquare className="w-5 h-5 text-purple-400 ml-1" />
+                                        <div>
+                                            <h5 className="text-white font-medium text-sm">{act.titulo}</h5>
+                                            <p className="text-xs text-purple-300/60 font-mono mt-0.5">VENCE: {new Date(act.fechaEntrega).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {!unidad.Materials?.length && !unidad.Actividads?.length && <p className="text-center text-slate-600 italic text-sm py-2">Unidad vacía</p>}
+                            </div>
                         </div>
+                    ))}
+                    {!curso.Unidads?.length && <div className="text-center py-12 text-slate-500">No hay contenido todavía.</div>}
+                </div>
+            )}
+
+            {/* TAB: ALUMNOS */}
+            {activeTab === 'alumnos' && isInstructor && (
+                <div className="animate-in fade-in duration-300">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-white">Listado de Alumnos</h3>
+                        <button onClick={() => setShowEnrollModal(true)} className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            Inscribir Alumno
+                        </button>
                     </div>
-                ))}
-            </div>
+
+                    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-800/50 border-b border-white/10 text-xs uppercase text-slate-400 tracking-wider">
+                                    <th className="p-4 font-bold">Alumno (Email)</th>
+                                    <th className="p-4 font-bold">Fecha Inscripción</th>
+                                    <th className="p-4 font-bold">Calificación Final</th>
+                                    <th className="p-4 font-bold text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5 text-sm text-slate-300">
+                                {curso.Inscripcions && curso.Inscripcions.map((ins) => (
+                                    <tr key={ins.id} className="hover:bg-white/5 transition-colors">
+                                        <td className="p-4 font-medium text-white">{ins.alumnoEmail}</td>
+                                        <td className="p-4">{new Date(ins.fechaInscripcion).toLocaleDateString()}</td>
+                                        <td className="p-4">
+                                            {ins.calificacionFinal ? (
+                                                <span className="inline-block px-2 py-1 rounded bg-green-500/20 text-green-400 font-bold border border-green-500/30">
+                                                    {ins.calificacionFinal}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-500 italic">-</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <button className="text-purple-400 hover:text-purple-300 font-medium">Calificar</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {!curso.Inscripcions?.length && (
+                                    <tr>
+                                        <td colSpan="4" className="p-8 text-center text-slate-500">No hay alumnos inscriptos en este curso.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Inscripción */}
+            {showEnrollModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-white">Inscribir Alumno</h3>
+                            <button onClick={() => setShowEnrollModal(false)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleEnrollStudent} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Email del Alumno</label>
+                                <input
+                                    type="email"
+                                    required
+                                    placeholder="alumno@email.com"
+                                    value={enrollEmail}
+                                    onChange={(e) => setEnrollEmail(e.target.value)}
+                                    className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                                <p className="text-xs text-slate-500 mt-2">El alumno debe estar registrado en la plataforma.</p>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button type="button" onClick={() => setShowEnrollModal(false)} className="px-4 py-2 text-slate-300 hover:bg-white/5 rounded-lg">Cancelar</button>
+                                <button type="submit" disabled={enrollLoading} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold shadow-lg shadow-purple-900/20">
+                                    {enrollLoading ? 'Inscribiendo...' : 'Confirmar Inscripción'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

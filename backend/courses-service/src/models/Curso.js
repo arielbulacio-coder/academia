@@ -6,17 +6,17 @@ const Curso = sequelize.define('Curso', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    anio: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
-    division: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
     descripcion: {
         type: DataTypes.TEXT,
         allowNull: true
+    },
+    imagen: {
+        type: DataTypes.STRING, // URL de la imagen
+        allowNull: true
+    },
+    finalizado: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
 });
 
