@@ -28,7 +28,8 @@ function App() {
   }, [])
 
   const fetchUser = async (token) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+    // HARDCODE URL FOR PRODUCTION DEBUGGING
+    const apiUrl = 'http://auth.149.50.130.160.nip.io'
     try {
       const res = await fetch(`${apiUrl}/auth/me`, {
         headers: {
@@ -63,7 +64,8 @@ function App() {
     const endpoint = isLogin ? '/auth/login' : '/auth/register'
     const body = isLogin ? { email: formData.email, password: formData.password } : formData
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+    // HARDCODE URL FOR PRODUCTION DEBUGGING
+    const apiUrl = 'http://auth.149.50.130.160.nip.io'
     try {
       const res = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
