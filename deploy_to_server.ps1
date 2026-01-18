@@ -3,11 +3,14 @@ $User = "root"
 
 $Commands = "
 set -e
-echo '=== INICIANDO DESPLIEGUE ==='
+echo '=== INICIANDO DESPLIEGUE (FORZADO) ==='
+
 # 1. Proxy
 echo '> Actualizando Proxy...'
 cd /root/academia/proxy
-git pull origin main
+# Forzamos reset para sobrescribir cambios locales
+git fetch origin main
+git reset --hard origin/main
 chmod +x deploy.sh
 ./deploy.sh
 
@@ -18,9 +21,9 @@ git fetch origin main
 git reset --hard origin/main
 chmod +x deploy.sh
 ./deploy.sh
+
 echo '=== LISTO ==='
 "
 
 Write-Host "Conectando a $ServerIP... (Contraseña: k3.46iltUtG/tQ)" -ForegroundColor Cyan
-# Pasamos los comandos como Here-String a ssh
 $Commands | ssh -tt $User@$ServerIP "bash"

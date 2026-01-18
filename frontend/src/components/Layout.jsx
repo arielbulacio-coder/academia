@@ -1,5 +1,5 @@
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, LogOut, Menu, X, User, FileCheck } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, LogOut, Menu, X, User, FileCheck, Book } from 'lucide-react';
 import { useState } from 'react';
 
 const Layout = ({ children, user, handleLogout }) => {
