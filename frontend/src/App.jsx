@@ -85,7 +85,8 @@ function App() {
         setError(data.message || 'Error occurred')
       }
     } catch (err) {
-      setError('Connection error')
+      console.error("Login Error:", err);
+      setError(`Connection error: ${err.message}`)
     } finally {
       setLoading(false)
     }

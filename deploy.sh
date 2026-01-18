@@ -1,37 +1,20 @@
 #!/bin/bash
+echo "Desplegando Academia..."
 
-# Herramienta de Despliegue Seguro
-# Uso: Ejecutar este script en el servidor para actualizar la aplicación
-
-echo "==========================================="
-echo "   Iniciando Despliegue de Academia..."
-echo "==========================================="
-
-echo "[1/4] Descargando últimos cambios..."
+# 1. Bajar últimos cambios
 git pull origin main
 
-echo "[2/5] Configurando Infraestructura de Red..."
-# Crear red externa 'web' si no existe
-docker network create web 2>/dev/null || true
+# 2. Reconstruir y levantar servicios (con la variable de entorno para el build del frontend)
+#    Es crucial pasar VITE_API_URL durante el build.
+export VITE_API_URL=http://auth.149.50.130.160.nip.io
+docker compose up -d --build
 
-echo "[3/5] Desplegando Portero (Nginx Manual)..."
-# Limpiar portero antiguo si existe
-docker stop traefik 2>/dev/null || true
-docker rm traefik 2>/dev/null || true
+# 3. Limpiar imágenes viejas para ahorrar espacio
+docker image prune -f
 
-# Levantar nuevo portero
-cd proxy
-docker compose up -d --force-recreate
-cd ..
-
-echo "[4/5] Limpiando caché de Aplicación..."
-docker system prune -f
-
-echo "[5/5] Desplegando Academia..."
-# --build: Fuerza la construcción de imagenes nuevas
-# --force-recreate: Fuerza a soltar cualquier configuración vieja
-docker compose up -d --build --force-recreate
-
+# 4. Reiniciar el Proxy Inverso (IMPORTANTE para actualizar IPs internas)
+echo "Reiniciando Proxy Inverso..."
+docker restart reverse_proxy || echo "Advertencia: No se pudo reiniciar reverse_proxy. Verifique si existe."
 
 echo "==========================================="
 echo "   Despliegue Completado!"
