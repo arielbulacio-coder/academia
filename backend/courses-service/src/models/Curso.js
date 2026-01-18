@@ -4,8 +4,7 @@ const sequelize = require('../db');
 const Curso = sequelize.define('Curso', {
     nombre: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: false
     },
     anio: {
         type: DataTypes.INTEGER,

@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Cursos from './pages/Cursos'
 import Materias from './pages/Materias'
+import CourseDetail from './pages/CourseDetail'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -104,6 +105,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard user={user} />} />
             <Route path="/cursos" element={<Cursos />} />
+            <Route path="/curso/:id" element={<CourseDetail user={user} />} />
             <Route path="/materias" element={<Materias />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
