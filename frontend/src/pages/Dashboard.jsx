@@ -4,6 +4,9 @@ import { Users, BookOpen, FileCheck, GraduationCap, School } from 'lucide-react'
 const Dashboard = ({ user }) => {
     const navigate = useNavigate();
 
+    if (!user) return <div className="p-8 text-white">Error crítico: Objeto usuario no recibido.</div>;
+    console.log("Dashboard User:", user); // DEBUG
+
     // DASHBOARD ADMIN
     if (user.role === 'admin') {
         return (
