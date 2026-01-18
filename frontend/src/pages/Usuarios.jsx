@@ -65,7 +65,8 @@ const Usuarios = ({ user }) => {
                 setFormData({ name: '', email: '', role: 'alumno', EscuelaId: user.EscuelaId || '' });
             } else {
                 const err = await res.json();
-                alert(`Error: ${err.message}`);
+                const errorMessage = err.message || err.error || 'Ocurrió un error desconocido';
+                alert(`Error: ${errorMessage}`);
             }
         } catch (error) {
             console.error(error);
