@@ -19,8 +19,9 @@ function App() {
   }, [])
 
   const fetchUser = async (token) => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
     try {
-      const res = await fetch('http://localhost:3001/auth/me', {
+      const res = await fetch(`${apiUrl}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -51,8 +52,9 @@ function App() {
     const endpoint = isLogin ? '/auth/login' : '/auth/register'
     const body = isLogin ? { email: formData.email, password: formData.password } : formData
 
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
     try {
-      const res = await fetch(`http://localhost:3001${endpoint}`, {
+      const res = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
