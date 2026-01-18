@@ -108,7 +108,8 @@ app.post('/users', authMiddleware, async (req, res) => {
 
         res.status(201).json(newUser);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error(e);
+        res.status(500).json({ message: e.message });
     }
 });
 
