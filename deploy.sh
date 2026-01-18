@@ -1,7 +1,10 @@
 #!/bin/bash
 echo "Desplegando Academia..."
 
-# 1. Bajar últimos cambios
+# 1. Crear red compartida si no existe
+docker network create web 2>/dev/null || true
+
+# 2. Bajar últimos cambios
 git pull origin main
 
 # 2. Reconstruir y levantar servicios (con la variable de entorno para el build del frontend)

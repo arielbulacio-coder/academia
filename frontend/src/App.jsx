@@ -10,6 +10,15 @@ import Observacion from './pages/Observacion'
 import Usuarios from './pages/Usuarios'
 import Planificador from './pages/Planificador'
 
+const getAuthUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && window.location.hostname.includes('nip.io')) {
+    // Dynamically replace subdomain 'academia' with 'auth'
+    return window.location.protocol + '//' + window.location.hostname.replace('academia.', 'auth.');
+  }
+  return 'http://auth.149.50.130.160.nip.io';
+};
+
 function App() {
   const [user, setUser] = useState(null)
   const [isLogin, setIsLogin] = useState(true)
@@ -31,7 +40,7 @@ function App() {
   }, [])
 
   const fetchUser = async (token) => {
-    const apiUrl = 'http://auth.149.50.130.160.nip.io'
+    const apiUrl = getAuthUrl()
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 seg timeout
@@ -71,7 +80,7 @@ function App() {
     const endpoint = isLogin ? '/auth/login' : '/auth/register'
     const body = isLogin ? { email: formData.email, password: formData.password } : formData
 
-    const apiUrl = 'http://auth.149.50.130.160.nip.io'
+    const apiUrl = getAuthUrl()
     try {
       const res = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
