@@ -36,10 +36,11 @@ const Layout = ({ children, user, handleLogout }) => {
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex w-64 bg-slate-900 border-r border-white/10 flex-col fixed h-full z-20">
                 <div className="p-6">
-                    <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter">
+                    <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter leading-none">
                         ACADEMIA
+                        <span className="block text-white text-xs font-normal mt-1 tracking-normal">Técnico Profesional</span>
                     </h1>
-                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">Campus Virtual</p>
+                    <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-bold border-t border-white/10 pt-2">Ciclo 2026</p>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2">
@@ -48,8 +49,8 @@ const Layout = ({ children, user, handleLogout }) => {
                             key={item.name}
                             to={item.href}
                             className={`flex items-center px-4 py-3 rounded-xl transition-all font-medium ${isActive(item.href)
-                                    ? 'bg-purple-600 shadow-lg shadow-purple-900/40 text-white'
-                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                ? 'bg-purple-600 shadow-lg shadow-purple-900/40 text-white'
+                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                 }`}
                         >
                             <item.icon className={`w-5 h-5 mr-3 ${isActive(item.href) ? 'text-white' : 'text-slate-500'}`} />
