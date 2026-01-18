@@ -7,14 +7,10 @@ const User = sequelize.define('User', {
         autoIncrement: true,
         primaryKey: true
     },
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     email: {
         type: DataTypes.STRING,
-        unique: true,
         allowNull: false,
+        unique: true,
         validate: {
             isEmail: true
         }
@@ -23,9 +19,30 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    role: {
+    name: {
         type: DataTypes.STRING,
-        defaultValue: 'studente'
+        allowNull: true
+    },
+    role: {
+        type: DataTypes.ENUM,
+        values: ['admin', 'alumno', 'profesor', 'padre', 'preceptor', 'jefe_preceptores', 'secretario', 'director', 'vicedirector'],
+        defaultValue: 'alumno'
+    },
+    foto: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    telefono: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    bio: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    intereses: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
 });
 
