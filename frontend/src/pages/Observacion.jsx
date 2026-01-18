@@ -39,7 +39,7 @@ const Observacion = ({ user }) => {
     }, [view, user.role, user.EscuelaId]);
 
     const fetchObservaciones = async () => {
-        const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
+        const apiUrl = 'http://courses.149.50.130.160.nip.io';
         // Construir query
         let query = `role=${user.role}`;
         if (user.EscuelaId) query += `&EscuelaId=${user.EscuelaId}`;
@@ -54,8 +54,8 @@ const Observacion = ({ user }) => {
         if (loadingResources) return;
         setLoadingResources(true);
         const token = localStorage.getItem('token');
-        const authUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-        const coursesUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
+        const authUrl = 'http://auth.149.50.130.160.nip.io';
+        const coursesUrl = 'http://courses.149.50.130.160.nip.io';
 
         try {
             // Cargar Profesores (Role Profesor + Auth Token)
@@ -85,7 +85,7 @@ const Observacion = ({ user }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
+        const apiUrl = 'http://courses.149.50.130.160.nip.io';
 
         const payload = {
             ...formData,
