@@ -20,25 +20,29 @@ function App() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [authChecking, setAuthChecking] = useState(true)
+  const [authChecking, setAuthChecking] = useState(false) // No bloquear inicio
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
+      setAuthChecking(true) // Mostrar loading solo si hay token que validar
       fetchUser(token)
-    } else {
-      setAuthChecking(false)
     }
   }, [])
 
   const fetchUser = async (token) => {
     const apiUrl = 'http://auth.149.50.130.160.nip.io'
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 seg timeout
+
       const res = await fetch(`${apiUrl}/auth/me`, {
+        signal: controller.signal,
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      clearTimeout(timeoutId)
       if (res.ok) {
         const userData = await res.json()
         setUser(userData)
