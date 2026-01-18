@@ -18,13 +18,21 @@ const ObservacionClase = sequelize.define('ObservacionClase', {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
     },
+    cantidadAlumnos: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    metodologiaABP: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
     itemsEvaluacion: {
-        type: DataTypes.JSONB, // { puntualidad: 5, claridad: 4, participacion: 3 ... }
-        allowNull: true
+        type: DataTypes.JSONB,
+        // Ejemplo: { puntualidad: 5, claridad: 4, participacion: 3 }
+        defaultValue: {}
     },
     comentarios: {
-        type: DataTypes.TEXT,
-        allowNull: true
+        type: DataTypes.TEXT
     },
     EscuelaId: {
         type: DataTypes.INTEGER,

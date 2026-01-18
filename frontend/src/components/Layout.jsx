@@ -15,8 +15,8 @@ const Layout = ({ children, user, handleLogout }) => {
             { name: 'Cursos', href: '/cursos', icon: BookOpen },
         ];
 
-        // Director
-        if (user.role === 'director' || user.role === 'admin') {
+        // Director / Directivos / Inspector
+        if (['director', 'vicedirector', 'regente', 'admin', 'inspector'].includes(user.role)) {
             items.push({ name: 'Observaciones', href: '/observacion', icon: FileCheck });
             items.push({ name: 'Usuarios', href: '/usuarios', icon: Users });
         }
@@ -24,6 +24,11 @@ const Layout = ({ children, user, handleLogout }) => {
         // Alumno / Profesor
         if (user.role === 'profesor' || user.role === 'alumno') {
             items.push({ name: 'Mi Perfil', href: '/perfil', icon: User });
+        }
+
+        // Solo Profesores y Directivos
+        if (['profesor', 'director', 'vicedirector', 'regente'].includes(user.role)) {
+            items.push({ name: 'Planificador IA', href: '/planificador', icon: Book });
         }
 
         return items;

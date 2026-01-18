@@ -6,6 +6,9 @@ const Perfil = ({ user }) => {
     const roleLabel = {
         'admin': 'Administrador General',
         'director': 'Director de Escuela',
+        'vicedirector': 'Vicedirector',
+        'regente': 'Regente Técnico',
+        'inspector': 'Inspector Regional',
         'secretario': 'Secretario Académico',
         'profesor': 'Instructor / Docente',
         'alumno': 'Estudiante'

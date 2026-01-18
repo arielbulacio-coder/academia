@@ -8,6 +8,7 @@ import CourseDetail from './pages/CourseDetail'
 import Perfil from './pages/Perfil'
 import Observacion from './pages/Observacion'
 import Usuarios from './pages/Usuarios'
+import Planificador from './pages/Planificador'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -113,6 +114,7 @@ function App() {
             <Route path="/materias" element={<Materias />} />
             <Route path="/perfil" element={<Perfil user={user} />} />
             <Route path="/observacion" element={<Observacion user={user} />} />
+            <Route path="/planificador" element={<Planificador user={user} />} />
             <Route path="/usuarios" element={<Usuarios user={user} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

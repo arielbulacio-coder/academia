@@ -84,9 +84,10 @@ app.post('/users', authMiddleware, async (req, res) => {
         const requester = req.user;
 
         // Validaciones de permisos simples
-        if (requester.role === 'admin') {
-            // Admin puede crear cualquier cosa, incluyendo directores y escuelas
-        } else if (requester.role === 'director' || requester.role === 'secretario') {
+        if (requester.role === 'admin' || requester.role === 'inspector') {
+            // Admin e Inspector pueden ver todo, pero para crear a veces restringimos
+            // Aquí permitimos por flexibilidad
+        } else if (['director', 'vicedirector', 'regente', 'secretario'].includes(requester.role)) {
             // Solo pueden crear en SU escuela
             if (EscuelaId && parseInt(EscuelaId) !== requester.EscuelaId) {
                 return res.status(403).json({ message: 'No puedes crear usuarios en otra escuela' });

@@ -15,7 +15,7 @@ const Usuarios = ({ user }) => {
     });
 
     const isAdmin = user.role === 'admin';
-    const isDirector = user.role === 'director';
+    const isDirector = ['director', 'vicedirector', 'regente'].includes(user.role);
     const isSecretario = user.role === 'secretario';
 
     // Fetch Base Data
@@ -170,9 +170,20 @@ const Usuarios = ({ user }) => {
                                     <select className="w-full bg-slate-800 border border-white/10 rounded p-2 text-white" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
                                         <option value="alumno">Alumno</option>
                                         <option value="profesor">Profesor / Instructor</option>
-                                        {(isDirector || isAdmin) && <option value="secretario">Secretario</option>}
-                                        {isAdmin && <option value="director">Director</option>}
-                                        {isAdmin && <option value="admin">Administrador</option>}
+                                        {(isDirector || isAdmin) && (
+                                            <>
+                                                <option value="secretario">Secretario</option>
+                                                <option value="regente">Regente</option>
+                                                <option value="vicedirector">Vicedirector</option>
+                                            </>
+                                        )}
+                                        {isAdmin && (
+                                            <>
+                                                <option value="director">Director</option>
+                                                <option value="inspector">Inspector</option>
+                                                <option value="admin">Administrador</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
 
