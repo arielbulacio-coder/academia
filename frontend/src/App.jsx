@@ -5,6 +5,9 @@ import Dashboard from './pages/Dashboard'
 import Cursos from './pages/Cursos'
 import Materias from './pages/Materias'
 import CourseDetail from './pages/CourseDetail'
+import Perfil from './pages/Perfil'
+import Observacion from './pages/Observacion'
+import Usuarios from './pages/Usuarios'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -108,6 +111,9 @@ function App() {
             <Route path="/cursos" element={<Cursos />} />
             <Route path="/curso/:id" element={<CourseDetail user={user} />} />
             <Route path="/materias" element={<Materias />} />
+            <Route path="/perfil" element={<Perfil user={user} />} />
+            <Route path="/observacion" element={<Observacion user={user} />} />
+            <Route path="/usuarios" element={<Usuarios user={user} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
@@ -122,19 +128,25 @@ function App() {
       <div className="relative w-full max-w-md">
         {/* Header Branding */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
-            Academia
+          <h1 className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight mb-2">
+            Academia Técnico Profesional
           </h1>
-          <p className="text-slate-400 mt-2 text-sm font-medium uppercase tracking-widest">
-            Gastronomía • Electrónica • Informática
+          <p className="text-slate-300 text-lg font-medium tracking-wide">
+            Cursos de Formación Profesional
           </p>
+          <p className="text-slate-400 text-sm mt-1 uppercase tracking-widest">
+            & Materias Técnicas
+          </p>
+          <div className="mt-4 inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-cyan-400 text-xs font-bold">
+            Ciclo Lectivo 2026
+          </div>
         </div>
 
         {/* Login Card */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 overflow-hidden relative">
           <div className="animate-in fade-in zoom-in-95 duration-300">
             <h2 className="text-xl font-semibold mb-6 text-center">
-              {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+              {isLogin ? 'Acceso al Campus' : 'Solicitar Acceso'}
             </h2>
 
             {error && (
@@ -163,7 +175,7 @@ function App() {
                 <input
                   type="email"
                   name="email"
-                  placeholder="correo@ejemplo.com"
+                  placeholder="correo@institucional.edu"
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -194,22 +206,22 @@ function App() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Procesando...
+                    Validando...
                   </span>
                 ) : (
-                  isLogin ? 'Entrar al Sistema' : 'Crear Cuenta'
+                  isLogin ? 'Ingresar' : 'Registrarse'
                 )}
               </button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-slate-400 text-sm">
-                {isLogin ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '}
+                {isLogin ? '¿Olvidaste tu contraseña? ' : '¿Personal de la institución? '}
                 <button
                   onClick={() => { setIsLogin(!isLogin); setError('') }}
                   className="text-cyan-400 hover:text-cyan-300 font-medium hover:underline transition-colors"
                 >
-                  {isLogin ? 'Regístrate aquí' : 'Inicia sesión aquí'}
+                  {isLogin ? 'Recuperar' : 'Pedir acceso administrativo'}
                 </button>
               </p>
             </div>
@@ -217,7 +229,7 @@ function App() {
         </div>
 
         <footer className="mt-8 text-center text-slate-500 text-xs">
-          <p>© 2024 Academia - System Build: {typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : 'Dev'}</p>
+          <p>© 2024 Academia Education System - v2.0 Enterprise</p>
         </footer>
       </div>
     </div>

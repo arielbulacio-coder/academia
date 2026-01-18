@@ -11,12 +11,16 @@ const Curso = sequelize.define('Curso', {
         allowNull: true
     },
     imagen: {
-        type: DataTypes.STRING, // URL de la imagen
+        type: DataTypes.STRING,
         allowNull: true
     },
     finalizado: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    EscuelaId: {
+        type: DataTypes.INTEGER,
+        allowNull: true // Should strictly be false for multi-tenant, allowing null for backwards compat during migration
     }
 });
 

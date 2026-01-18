@@ -1,38 +1,30 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
+const Escuela = require('./Escuela');
 
 const User = sequelize.define('User', {
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
     },
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
-        validate: {
-            isEmail: true
-        }
+        unique: true
     },
     password: {
         type: DataTypes.STRING,
         allowNull: false
     },
-    name: {
+    role: {
+        type: DataTypes.ENUM('admin', 'director', 'secretario', 'profesor', 'alumno', 'padre', 'preceptor', 'jefe_preceptores'),
+        defaultValue: 'alumno'
+    },
+    photo: {
         type: DataTypes.STRING,
         allowNull: true
     },
-    role: {
-        type: DataTypes.ENUM,
-        values: ['admin', 'alumno', 'profesor', 'padre', 'preceptor', 'jefe_preceptores', 'secretario', 'director', 'vicedirector'],
-        defaultValue: 'alumno'
-    },
-    foto: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    },
-    telefono: {
+    phone: {
         type: DataTypes.STRING,
         allowNull: true
     },
@@ -40,10 +32,17 @@ const User = sequelize.define('User', {
         type: DataTypes.TEXT,
         allowNull: true
     },
-    intereses: {
+    interests: {
         type: DataTypes.TEXT,
+        allowNull: true
+    },
+    EscuelaId: {
+        type: DataTypes.INTEGER,
         allowNull: true
     }
 });
+
+User.belongsTo(Escuela);
+Escuela.hasMany(User);
 
 module.exports = User;

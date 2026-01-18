@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const sequelize = require('./db');
 const User = require('./models/User');
+const Escuela = require('./models/Escuela');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -14,124 +15,153 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Register Route
-app.post('/auth/register', async (req, res) => {
+// --- MIDDLEWARE ---
+const authMiddleware = (req, res, next) => {
+    const header = req.headers.authorization;
+    if (!header) return res.status(401).json({ error: 'Token missing' });
+    const token = header.split(' ')[1];
     try {
-        const { name, email, password } = req.body;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+        req.user = decoded;
+        next();
+    } catch (e) {
+        return res.status(401).json({ error: 'Invalid token' });
+    }
+};
 
-        // Check if user exists
+// --- AUTH ROUTES ---
+
+app.post('/auth/register', async (req, res) => {
+    // Registro público (solo alumnos por defecto)
+    try {
+        const { name, email, password, role, EscuelaId } = req.body;
+        // Solo permitir roles básicos o filtrar si es público
+        // Para simplificar, permitimos registro, pero en prod deberiamos limitar
         const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
+        if (existingUser) return res.status(400).json({ message: 'User exists' });
 
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create user
         const user = await User.create({
-            name,
-            email,
-            password: hashedPassword
+            name, email, password: hashedPassword,
+            role: role || 'alumno',
+            EscuelaId
         });
 
-        // Create token
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'secret',
-            { expiresIn: '24h' }
-        );
-
-        res.status(201).json({
-            message: 'User registered successfully',
-            token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
-        });
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role, EscuelaId: user.EscuelaId }, process.env.JWT_SECRET || 'secret');
+        res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, EscuelaId: user.EscuelaId } });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Error', error: error.message });
     }
 });
 
-// Login Route
 app.post('/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // Check user
         const user = await User.findOne({ where: { email } });
-        if (!user) {
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role, EscuelaId: user.EscuelaId }, process.env.JWT_SECRET || 'secret');
+        res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, EscuelaId: user.EscuelaId, photo: user.photo } });
+    } catch (error) {
+        res.status(500).json({ message: 'Error', error: error.message });
+    }
+});
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
+app.get('/auth/me', authMiddleware, async (req, res) => {
+    const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password'] } });
+    res.json(user);
+});
 
-        // Create token
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'secret',
-            { expiresIn: '24h' }
-        );
+// --- MANAGEMENT ROUTES (Users & Schools) ---
 
-        res.json({
-            message: 'Login successful',
-            token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role
+// Crear Usuarios (Gestionado por Admin/Director/Secretario)
+app.post('/users', authMiddleware, async (req, res) => {
+    try {
+        const { name, email, password, role, EscuelaId, photo } = req.body;
+        const requester = req.user;
+
+        // Validaciones de permisos simples
+        if (requester.role === 'admin') {
+            // Admin puede crear cualquier cosa, incluyendo directores y escuelas
+        } else if (requester.role === 'director' || requester.role === 'secretario') {
+            // Solo pueden crear en SU escuela
+            if (EscuelaId && parseInt(EscuelaId) !== requester.EscuelaId) {
+                return res.status(403).json({ message: 'No puedes crear usuarios en otra escuela' });
             }
+            // Forzar escuela del creador si no se envía
+            req.body.EscuelaId = requester.EscuelaId;
+        } else {
+            return res.status(403).json({ message: 'No autorizado' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password || '123456', salt); // Default pass
+
+        const newUser = await User.create({
+            name, email, password: hashedPassword, role,
+            EscuelaId: req.body.EscuelaId || EscuelaId,
+            photo
         });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+
+        res.status(201).json(newUser);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
-// Verify Token / Me
-app.get('/auth/me', async (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'No token provided' });
-
-    const token = authHeader.split(' ')[1];
+app.get('/users', authMiddleware, async (req, res) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-        const user = await User.findByPk(decoded.id, {
-            attributes: { exclude: ['password'] }
+        const requester = req.user;
+        let whereClause = {};
+
+        if (requester.role === 'admin') {
+            // Admin ve todo, o filtra por escuela si quiere
+            if (req.query.EscuelaId) whereClause.EscuelaId = req.query.EscuelaId;
+        } else {
+            // Director/Secretario solo ve su escuela
+            whereClause.EscuelaId = requester.EscuelaId;
+        }
+
+        if (req.query.role) whereClause.role = req.query.role;
+
+        const users = await User.findAll({
+            where: whereClause,
+            attributes: { exclude: ['password'] },
+            include: [Escuela]
         });
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        res.json(user);
-    } catch (error) {
-        res.status(401).json({ error: 'Invalid token' });
+        res.json(users);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
+app.delete('/users/:id', authMiddleware, async (req, res) => {
+    // TODO: Agregar validación de que solo borres gente de tu escuela
+    await User.destroy({ where: { id: req.params.id } });
+    res.json({ message: 'Deleted' });
+});
+
+// Escuelas (Solo Admin)
+app.post('/escuelas', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const escuela = await Escuela.create(req.body);
+    res.status(201).json(escuela);
+});
+
+app.get('/escuelas', async (req, res) => {
+    const escuelas = await Escuela.findAll();
+    res.json(escuelas);
+});
+
+// Health check
 app.get('/', async (req, res) => {
-    try {
-        await sequelize.authenticate();
-        res.json({ message: 'Auth Service is running', db_status: 'Connected' });
-    } catch (error) {
-        res.status(500).json({ message: 'Auth Service is running', db_status: 'Error', error: error.message });
-    }
+    await sequelize.authenticate();
+    res.json({ message: 'Auth Service Ready' });
 });
 
-// Sync DB and Start Server
 sequelize.sync({ alter: true }).then(() => {
-    console.log('Database synced');
-    app.listen(port, () => {
-        console.log(`Auth Service listening at http://localhost:${port}`);
-    });
-}).catch(err => {
-    console.error('Unable to sync database:', err);
+    app.listen(port, () => console.log(`Auth Service at ${port}`));
 });

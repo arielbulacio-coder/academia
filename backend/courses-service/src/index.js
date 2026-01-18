@@ -7,6 +7,7 @@ const Unidad = require('./models/Unidad');
 const Material = require('./models/Material');
 const Actividad = require('./models/Actividad');
 const Inscripcion = require('./models/Inscripcion');
+const ObservacionClase = require('./models/ObservacionClase');
 
 const app = express();
 const port = process.env.PORT || 3002;
@@ -20,7 +21,14 @@ app.use(express.json());
 // 1. Cursos Publicos / Generales
 app.get('/cursos', async (req, res) => {
     try {
+        // En un futuro, filtrar por req.query.EscuelaId si se pasa
+        const whereClause = {};
+        if (req.query.EscuelaId) {
+            whereClause.EscuelaId = req.query.EscuelaId;
+        }
+
         const cursos = await Curso.findAll({
+            where: whereClause,
             include: [{
                 model: Unidad,
                 include: [Material, Actividad]
@@ -86,10 +94,9 @@ app.delete('/cursos/:id', async (req, res) => {
     }
 });
 
-// 2. Inscripciones / Alumnos
+// 2. Inscripciones
 app.post('/inscripciones', async (req, res) => {
     try {
-        // Recibe { CursoId, alumnoEmail }
         const inscripcion = await Inscripcion.create(req.body);
         res.status(201).json(inscripcion);
     } catch (err) {
@@ -97,15 +104,44 @@ app.post('/inscripciones', async (req, res) => {
     }
 });
 
-app.put('/inscripciones/:id', async (req, res) => {
+app.get('/inscripciones/alumno', async (req, res) => {
     try {
-        // Para actualizar calificacionFinal
-        await Inscripcion.update(req.body, { where: { id: req.params.id } });
-        res.json({ message: 'Inscripción actualizada' });
+        const { email } = req.query;
+        if (!email) return res.status(400).json({ error: 'Email requerido' });
+
+        const inscripciones = await Inscripcion.findAll({
+            where: { alumnoEmail: email },
+            include: [Curso]
+        });
+        res.json(inscripciones);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Observaciones
+app.post('/observaciones', async (req, res) => {
+    try {
+        const obs = await ObservacionClase.create(req.body);
+        res.status(201).json(obs);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
+
+app.get('/observaciones', async (req, res) => {
+    try {
+        const whereClause = {};
+        if (req.query.EscuelaId) {
+            whereClause.EscuelaId = req.query.EscuelaId;
+        }
+        const obs = await ObservacionClase.findAll({ where: whereClause, order: [['fecha', 'DESC']] });
+        res.json(obs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 // Health check
 app.get('/', async (req, res) => {
