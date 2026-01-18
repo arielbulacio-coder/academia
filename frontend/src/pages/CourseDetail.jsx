@@ -17,6 +17,8 @@ const CourseDetail = ({ user }) => {
         const fetchCurso = async () => {
             let url = `http://localhost:3002/cursos/${id}`;
             if (import.meta.env.VITE_API_URL) {
+                // Replace 'auth' subdomain with 'courses' if present for production structure
+                // Assumes VITE_API_URL is like http://auth.domain.com
                 url = import.meta.env.VITE_API_URL.replace('auth', 'courses') + `/cursos/${id}`;
             }
 
