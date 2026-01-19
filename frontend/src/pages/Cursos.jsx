@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Edit, Trash2, Plus, Users } from 'lucide-react';
+import CursoModal from '../components/CursoModal';
+
 
 const Cursos = () => {
     const [cursos, setCursos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null); // Local user state needed to check role
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const navigate = useNavigate();
 
     // Fetch user role from local storage or context (simplified here)
@@ -81,7 +84,10 @@ const Cursos = () => {
                 </div>
 
                 {isDirector && (
-                    <button className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-purple-900/20">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-purple-900/20"
+                    >
                         <Plus className="w-5 h-5" /> Nuevo Curso
                     </button>
                 )}
@@ -148,6 +154,12 @@ const Cursos = () => {
                     )}
                 </div>
             )}
+
+            <CursoModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchCursos}
+            />
         </div>
     );
 };

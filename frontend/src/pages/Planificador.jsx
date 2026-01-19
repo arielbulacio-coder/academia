@@ -15,8 +15,23 @@ const Planificador = ({ user }) => {
     // Editor / Visualizador
     const [editorContent, setEditorContent] = useState('');
     const [commentText, setCommentText] = useState('');
+    const [archivo, setArchivo] = useState(null);
 
     const isDirectivo = ['director', 'vicedirector', 'regente'].includes(user.role);
+
+    // Helper function to convert file to base64
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    };
+
+    const handleFileChange = (e) => {
+        setArchivo(e.target.files[0]);
+    };
 
     useEffect(() => {
         if (view === 'list') fetchPlanes();
