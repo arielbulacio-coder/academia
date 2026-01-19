@@ -16,7 +16,10 @@ const Planificador = ({ user }) => {
     // Editor / Visualizador
     const [editorContent, setEditorContent] = useState('');
     const [commentText, setCommentText] = useState('');
-    const [archivo, setArchivo] = useState(null);
+
+    // Archivos
+    const [fileDiseno, setFileDiseno] = useState(null);
+    const [fileFormato, setFileFormato] = useState(null);
 
     const isDirectivo = ['director', 'vicedirector', 'regente'].includes(user.role);
 
@@ -54,24 +57,24 @@ const Planificador = ({ user }) => {
         const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
 
         try {
-            let fileData = null;
-            if (archivo) {
-                const base64Str = await fileToBase64(archivo);
-                // Remove prefix "data:application/pdf;base64,"
-                const base64Content = base64Str.split(',')[1];
-                fileData = {
-                    mimeType: archivo.type,
-                    data: base64Content
+            const payload = { ...formData };
+
+            // Procesar Diseño Curricular
+            if (fileDiseno) {
+                const base64Str = await fileToBase64(fileDiseno);
+                payload.archivoDiseno = {
+                    mimeType: fileDiseno.type,
+                    data: base64Str.split(',')[1]
                 };
             }
 
-            const payload = { ...formData };
-            if (fileData) {
-                if (fileType === 'diseno') {
-                    payload.archivoDiseno = fileData;
-                } else {
-                    payload.archivoFormato = fileData;
-                }
+            // Procesar Formato (solo si no es ABP)
+            if (fileFormato && !formData.usarFormatoABP) {
+                const base64Str = await fileToBase64(fileFormato);
+                payload.archivoFormato = {
+                    mimeType: fileFormato.type,
+                    data: base64Str.split(',')[1]
+                };
             }
 
             const res = await fetch(`${apiUrl}/planificar`, {
@@ -219,46 +222,44 @@ const Planificador = ({ user }) => {
 
                         <input className="col-span-2 bg-slate-900 border border-white/10 p-3 rounded text-white" placeholder="Horas Totales del Curso (Ej: 80)" name="horasTotales" value={formData.horasTotales} onChange={(e) => setFormData({ ...formData, horasTotales: e.target.value })} />
 
-                        <div className="md:col-span-2 bg-slate-900/50 p-4 rounded-xl border border-dashed border-white/20 mt-4">
-                            <label className="block text-purple-400 text-xs font-bold uppercase mb-2">
-                                Subir Archivo Complementario (PDF/IMG)
-                            </label>
-                            <input
-                                type="file"
-                                accept="application/pdf, image/*"
-                                onChange={handleFileChange}
-                                className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500"
-                            />
+                        <div className="md:col-span-2 bg-slate-900/50 p-4 rounded-xl border border-dashed border-white/20 mt-4 space-y-4">
 
-                            {archivo && (
-                                <div className="mt-4 flex gap-4">
-                                    <label className="flex items-center gap-2 text-sm text-slate-300">
-                                        <input
-                                            type="radio"
-                                            name="fileType"
-                                            value="diseno"
-                                            checked={fileType === 'diseno'}
-                                            onChange={() => setFileType('diseno')}
-                                            className="text-purple-500 focus:ring-purple-500"
-                                        />
-                                        Es Contenido / Diseño Curricular
+                            {/* Input 1: Diseño Curricular */}
+                            <div>
+                                <label className="block text-purple-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
+                                    <FileText className="w-4 h-4" /> Cargar Diseño Curricular (PDF/IMG con Contenidos)
+                                </label>
+                                <input
+                                    type="file"
+                                    accept="application/pdf, image/*"
+                                    onChange={(e) => setFileDiseno(e.target.files[0])}
+                                    className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">
+                                    Sube aquí el programa o diseño curricular. La IA extraerá los temas y unidades de este archivo.
+                                </p>
+                            </div>
+
+                            {/* Input 2: Formato Manual (Opcional) */}
+                            {!formData.usarFormatoABP && (
+                                <div className="pt-4 border-t border-white/10">
+                                    <label className="block text-blue-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
+                                        <FileText className="w-4 h-4" /> Cargar Formato Visual (Opcional)
                                     </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-300">
-                                        <input
-                                            type="radio"
-                                            name="fileType"
-                                            value="formato"
-                                            checked={fileType === 'formato'}
-                                            onChange={() => setFileType('formato')}
-                                            className="text-purple-500 focus:ring-purple-500"
-                                        />
-                                        Es Plantilla de Formato
-                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="application/pdf, image/*"
+                                        onChange={(e) => setFileFormato(e.target.files[0])}
+                                        className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-1">
+                                        Si tienes una plantilla visual específica diferente al ABP.
+                                    </p>
                                 </div>
                             )}
 
                             {/* Opción Template ABP */}
-                            <div className="mt-4 pt-4 border-t border-white/10">
+                            <div className="pt-4 border-t border-white/10">
                                 <label className="flex items-center gap-2 text-sm font-bold text-cyan-400 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -269,13 +270,9 @@ const Planificador = ({ user }) => {
                                     Usar Formato Institucional (ABP)
                                 </label>
                                 <p className="text-[10px] text-slate-500 ml-6 mt-1">
-                                    Se utilizará el formato PDF oficial cargado en el sistema para estructurar la respuesta. (Anula otro formato subido).
+                                    Se utilizará el formato PDF oficial cargado en el sistema para estructurar la respuesta. (Recomendado).
                                 </p>
                             </div>
-
-                            <p className="text-[10px] text-slate-500 mt-2">
-                                Si es contenido, la IA extraerá temas de él. Si es formato, intentará imitar la estructura visual.
-                            </p>
                         </div>
 
                         <div className="col-span-2">
