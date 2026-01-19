@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 
-const CursoModal = ({ isOpen, onClose, onSuccess }) => {
+const CursoModal = ({ isOpen, onClose, onSuccess, user }) => {
     const [formData, setFormData] = useState({
         nombre: '',
         descripcion: '',
@@ -26,7 +26,8 @@ const CursoModal = ({ isOpen, onClose, onSuccess }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
-                    duracion_horas: parseInt(formData.duracion_horas) || 0
+                    duracion_horas: parseInt(formData.duracion_horas) || 0,
+                    EscuelaId: user?.EscuelaId
                 })
             });
 

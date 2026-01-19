@@ -11,6 +11,7 @@ const Planificador = ({ user }) => {
     const [formData, setFormData] = useState({
         apiKey: '', temario: '', horasTotales: '', horasSemanales: '', dias: '', fechaInicio: '', fechaFin: '', extras: ''
     });
+    const [fileType, setFileType] = useState('diseno'); // 'diseno' (contenido) or 'formato' (estructura)
 
     // Editor / Visualizador
     const [editorContent, setEditorContent] = useState('');
@@ -64,7 +65,14 @@ const Planificador = ({ user }) => {
                 };
             }
 
-            const payload = { ...formData, archivoFormato: fileData };
+            const payload = { ...formData };
+            if (fileData) {
+                if (fileType === 'diseno') {
+                    payload.archivoDiseno = fileData;
+                } else {
+                    payload.archivoFormato = fileData;
+                }
+            }
 
             const res = await fetch(`${apiUrl}/planificar`, {
                 method: 'POST',
@@ -177,7 +185,7 @@ const Planificador = ({ user }) => {
 
                         <div className="md:col-span-2 bg-slate-900/50 p-4 rounded-xl border border-dashed border-white/20 mt-4">
                             <label className="block text-purple-400 text-xs font-bold uppercase mb-2">
-                                Subir Archivo de Formato / Diseño Curricular (PDF/IMG)
+                                Subir Archivo Complementario (PDF/IMG)
                             </label>
                             <input
                                 type="file"
@@ -185,8 +193,36 @@ const Planificador = ({ user }) => {
                                 onChange={handleFileChange}
                                 className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500"
                             />
+
+                            {archivo && (
+                                <div className="mt-4 flex gap-4">
+                                    <label className="flex items-center gap-2 text-sm text-slate-300">
+                                        <input
+                                            type="radio"
+                                            name="fileType"
+                                            value="diseno"
+                                            checked={fileType === 'diseno'}
+                                            onChange={() => setFileType('diseno')}
+                                            className="text-purple-500 focus:ring-purple-500"
+                                        />
+                                        Es Contenido / Diseño Curricular
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-300">
+                                        <input
+                                            type="radio"
+                                            name="fileType"
+                                            value="formato"
+                                            checked={fileType === 'formato'}
+                                            onChange={() => setFileType('formato')}
+                                            className="text-purple-500 focus:ring-purple-500"
+                                        />
+                                        Es Plantilla de Formato
+                                    </label>
+                                </div>
+                            )}
+
                             <p className="text-[10px] text-slate-500 mt-2">
-                                Si subes un archivo, la IA intentará seguir estrictamente su estructura y contenido.
+                                Si es contenido, la IA extraerá temas de él. Si es formato, intentará imitar la estructura visual.
                             </p>
                         </div>
                     </div>

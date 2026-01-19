@@ -159,6 +159,7 @@ const Cursos = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={fetchCursos}
+                user={user}
             />
         </div>
     );
