@@ -20,7 +20,15 @@ const Curso = sequelize.define('Curso', {
     },
     EscuelaId: {
         type: DataTypes.INTEGER,
-        allowNull: true // Should strictly be false for multi-tenant, allowing null for backwards compat during migration
+        allowNull: true
+    },
+    duracion_horas: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
+    modalidad: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 });
 
