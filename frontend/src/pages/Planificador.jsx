@@ -180,8 +180,21 @@ const Planificador = ({ user }) => {
                 <form onSubmit={handleGenerate} className="space-y-4 bg-slate-800 p-6 rounded-2xl border border-white/10">
                     <div className="grid grid-cols-2 gap-4">
                         <input className="col-span-2 bg-slate-900 border border-white/10 p-3 rounded text-white" placeholder="Título / Temario (Ej: Curso de React)" name="temario" value={formData.temario} onChange={(e) => setFormData({ ...formData, temario: e.target.value })} required />
-                        <input className="bg-slate-900 border border-white/10 p-3 rounded text-white" placeholder="Horas Totales" name="horasTotales" value={formData.horasTotales} onChange={(e) => setFormData({ ...formData, horasTotales: e.target.value })} />
-                        <input className="bg-slate-900 border border-white/10 p-3 rounded text-white" placeholder="Clave API Gemini" name="apiKey" type="password" value={formData.apiKey} onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })} required />
+
+                        {/* Nuevos Campos Solicitados */}
+                        <div className="col-span-1">
+                            <label className="text-xs text-slate-400 mb-1 block">Fecha Inicio</label>
+                            <input type="date" className="w-full bg-slate-900 border border-white/10 p-3 rounded text-white" name="fechaInicio" value={formData.fechaInicio} onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })} />
+                        </div>
+                        <div className="col-span-1">
+                            <label className="text-xs text-slate-400 mb-1 block">Fecha Finalización</label>
+                            <input type="date" className="w-full bg-slate-900 border border-white/10 p-3 rounded text-white" name="fechaFin" value={formData.fechaFin} onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })} />
+                        </div>
+
+                        <input className="bg-slate-900 border border-white/10 p-3 rounded text-white" placeholder="Horas Cátedra Semanales (Ej: 4)" name="horasSemanales" value={formData.horasSemanales} onChange={(e) => setFormData({ ...formData, horasSemanales: e.target.value })} />
+                        <input className="bg-slate-900 border border-white/10 p-3 rounded text-white" placeholder="Días y Horarios (Ej: Mar y Jue 18-20hs)" name="dias" value={formData.dias} onChange={(e) => setFormData({ ...formData, dias: e.target.value })} />
+
+                        <input className="col-span-2 bg-slate-900 border border-white/10 p-3 rounded text-white" placeholder="Horas Totales del Curso (Ej: 80)" name="horasTotales" value={formData.horasTotales} onChange={(e) => setFormData({ ...formData, horasTotales: e.target.value })} />
 
                         <div className="md:col-span-2 bg-slate-900/50 p-4 rounded-xl border border-dashed border-white/20 mt-4">
                             <label className="block text-purple-400 text-xs font-bold uppercase mb-2">

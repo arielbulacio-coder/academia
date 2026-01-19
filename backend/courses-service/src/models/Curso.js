@@ -29,6 +29,10 @@ const Curso = sequelize.define('Curso', {
     modalidad: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    profesorId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 });
 

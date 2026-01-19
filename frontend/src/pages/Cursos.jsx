@@ -39,6 +39,16 @@ const Cursos = () => {
             url = import.meta.env.VITE_API_URL.replace('auth', 'courses') + '/cursos';
         }
 
+        // Filter based on role
+        const params = new URLSearchParams();
+        if (user?.role === 'director' || user?.role === 'regente' || user?.role === 'secretario') {
+            if (user.EscuelaId) params.append('EscuelaId', user.EscuelaId);
+        } else if (user?.role === 'profesor') {
+            params.append('profesorId', user.id);
+        }
+
+        if (params.toString()) url += `?${params.toString()}`;
+
         try {
             const res = await fetch(url);
             if (res.ok) {
@@ -53,8 +63,11 @@ const Cursos = () => {
     };
 
     useEffect(() => {
-        fetchCursos();
-    }, []);
+        if (user !== undefined) { // Wait until user state is determining (null is initial, maybe add 'userLoaded' flag if strictly needed, but user starts null, fetches fast. Logic allows null user to fetch all public courses, which is fine, or we wait?)
+            // Actually, we want public to see courses too? Yes.
+            fetchCursos();
+        }
+    }, [user]);
 
     const handleDelete = async (e, id) => {
         e.stopPropagation();

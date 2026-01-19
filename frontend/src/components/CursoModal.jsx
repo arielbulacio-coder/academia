@@ -10,6 +10,31 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user }) => {
         modalidad: 'presencial'
     });
     const [loading, setLoading] = useState(false);
+    const [profesores, setProfesores] = useState([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchProfesores();
+        }
+    }, [isOpen]);
+
+    const fetchProfesores = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        let url = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        // endpoint is /users?role=profesor&EscuelaId=... but let's just get all professors for this school
+        // If director, they have an EscuelaId.
+        try {
+            const res = await fetch(`${url}/users?role=profesor`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setProfesores(data);
+            }
+        } catch (e) { console.error(e); }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -127,6 +152,22 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user }) => {
                                 <option value="hibrida">Híbrida</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                            Asignar Profesor
+                        </label>
+                        <select
+                            value={formData.profesorId || ''}
+                            onChange={(e) => setFormData({ ...formData, profesorId: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        >
+                            <option value="">Seleccionar Profesor...</option>
+                            {profesores.map(p => (
+                                <option key={p.id} value={p.id}>{p.name} ({p.email})</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>

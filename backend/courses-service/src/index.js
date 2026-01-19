@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -27,6 +28,9 @@ app.get('/cursos', async (req, res) => {
         const whereClause = {};
         if (req.query.EscuelaId) {
             whereClause.EscuelaId = req.query.EscuelaId;
+        }
+        if (req.query.profesorId) {
+            whereClause.profesorId = req.query.profesorId;
         }
 
         const cursos = await Curso.findAll({
@@ -228,9 +232,12 @@ app.put('/planificaciones/:id', async (req, res) => {
 
 // 5. Planificador IA
 app.post('/planificar', async (req, res) => {
-    const { apiKey, temario, horasTotales, horasSemanales, dias, fechaInicio, fechaFin, extras, archivoFormato, archivoDiseno } = req.body;
+    let { apiKey } = req.body;
+    const { temario, horasTotales, horasSemanales, dias, fechaInicio, fechaFin, extras, archivoFormato, archivoDiseno } = req.body;
 
-    if (!apiKey) return res.status(400).json({ message: 'API Key requerida' });
+    if (!apiKey) apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) return res.status(400).json({ message: 'API Key requerida (configure GEMINI_API_KEY o envíela)' });
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
