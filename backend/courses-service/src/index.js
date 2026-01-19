@@ -293,6 +293,7 @@ app.post('/planificar', async (req, res) => {
             3. RELACIÓN: Cada unidad debe aportar herramientas para resolver la problemática inicial.
             
             Datos Logísticos:
+            - Docente a Cargo: ${req.body.profesorNombre || 'No especificado'}
             - Carga Horaria Total: ${horasTotales || 'No especificada'}
             - Carga Semanal: ${horasSemanales || 'No especificada'}
             - Días de Cursada: ${dias || 'No especificados'}

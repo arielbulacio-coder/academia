@@ -57,7 +57,7 @@ const Planificador = ({ user }) => {
         const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
 
         try {
-            const payload = { ...formData };
+            const payload = { ...formData, profesorNombre: user.name };
 
             // Procesar Diseño Curricular
             if (fileDiseno) {
