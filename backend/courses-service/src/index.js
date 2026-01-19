@@ -230,10 +230,50 @@ app.put('/planificaciones/:id', async (req, res) => {
     }
 });
 
+// Eliminación
+app.delete('/planificaciones/:id', async (req, res) => {
+    try {
+        await Planificacion.destroy({ where: { id: req.params.id } });
+        res.json({ message: 'Eliminada' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Refinar con IA
+app.post('/refinar', async (req, res) => {
+    const { contenido, instruccion, apiKey } = req.body;
+    const finalKey = apiKey || process.env.GEMINI_API_KEY;
+
+    if (!finalKey) return res.status(400).json({ message: 'API Key requerida' });
+
+    try {
+        const genAI = new GoogleGenerativeAI(finalKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `Actúa como un experto corrector pedagógico.
+        Tu tarea es REESCRIBIR el siguiente contenido de una planificación, aplicando la siguiente instrucción: "${instruccion}".
+        
+        IMPORTANTE: Devuelve TODA la planificación revisada en formato Markdown. No cortes nada a menos que la instrucción lo pida.
+        
+        CONTENIDO A REVISAR:
+        ${contenido}`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({ contenido: text });
+    } catch (error) {
+        console.error("Gemini Refine Error:", error);
+        res.status(500).json({ message: 'Error refinando', detail: error.message });
+    }
+});
+
 // 5. Planificador IA
 app.post('/planificar', async (req, res) => {
     let { apiKey } = req.body;
-    const { temario, horasTotales, horasSemanales, dias, fechaInicio, fechaFin, extras, archivoFormato, archivoDiseno } = req.body;
+    const { temario, horasTotales, horasSemanales, dias, fechaInicio, fechaFin, extras, archivoFormato, archivoDiseno, usarFormatoABP } = req.body;
 
     if (!apiKey) apiKey = process.env.GEMINI_API_KEY;
 
@@ -247,6 +287,11 @@ app.post('/planificar', async (req, res) => {
             `Actúa como un experto docente de formación profesional.
             Genera una planificación anual detallada para el curso de: "${temario}".
             
+            METODOLOGÍA PEDAGÓGICA (Aprendizaje Basado en Proyectos - ABP):
+            1. EJE CENTRAL: Debes formular una PREGUNTA ORIENTADORA o SITUACIÓN PROBLEMÁTICA desafiante, vinculada al contexto real profesional, que guíe todo el curso.
+            2. ESTRUCTURA: Organiza los contenidos y actividades en UNIDADES y MÓDULOS progresivos.
+            3. RELACIÓN: Cada unidad debe aportar herramientas para resolver la problemática inicial.
+            
             Datos Logísticos:
             - Carga Horaria Total: ${horasTotales || 'No especificada'}
             - Carga Semanal: ${horasSemanales || 'No especificada'}
@@ -254,16 +299,32 @@ app.post('/planificar', async (req, res) => {
             - Ciclo Lectivo: Inicio ${fechaInicio || '2026'} - Fin ${fechaFin || '2026'}
             
             INSTRUCCIONES CRÍTICAS SOBRE DOCUMENTOS ADJUNTOS:
-            1. Si se adjunta un "Archivo de Formato", DEBES seguir estrictamente esa estructura visual y jerárquica para tu respuesta.
-            2. Si se adjunta un "Diseño Curricular", DEBES extraer los contenidos, objetivos y unidades de ESE documento y usarlos para llenar la planificación.
+            1. Si se adjunta un "Diseño Curricular" (PDF de contenidos), DEBES USARLO como única fuente de verdad para los temas y contenidos. No inventes temas si están dados. Tu trabajo es adaptarlos a la estrategia ABP.
+            2. Si se adjunta un "Archivo de Formato" (o se seleccionó formato institucional ABP), respeta esa estructura visual estrictamente.
             
-            ${extras ? `Instrucciones adicionales: ${extras}` : ''}
+            ${extras ? `Instrucciones adicionales del docente: ${extras}` : ''}
             
             El formato de salida debe ser Markdown limpio.`
         ];
 
-        // Archivo 1: Formato
-        if (archivoFormato) {
+        // Archivo 1: Formato (Local ABP o Subido)
+        if (usarFormatoABP) {
+            const fs = require('fs');
+            const path = require('path');
+            const abpPath = path.join(__dirname, '..', 'templates', 'Planificacion_ABP.pdf');
+            if (fs.existsSync(abpPath)) {
+                const abpData = fs.readFileSync(abpPath).toString('base64');
+                promptParts.push("A CONTINUACIÓN EL FORMATO INSTITUCIONAL OBLIGATORIO (ABP):");
+                promptParts.push({
+                    inlineData: {
+                        data: abpData,
+                        mimeType: 'application/pdf'
+                    }
+                });
+            } else {
+                console.warn("Template ABP no encontrado en:", abpPath);
+            }
+        } else if (archivoFormato) {
             promptParts.push("A CONTINUACIÓN EL ARCHIVO DE FORMATO/PLANTILLA:");
             promptParts.push({
                 inlineData: {

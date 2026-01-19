@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bot, Save, FileText, Send, Calendar, MessageSquare, Edit3, Eye } from 'lucide-react';
+import { Bot, Save, FileText, Send, Calendar, MessageSquare, Edit3, Eye, Trash2, UploadCloud, RefreshCw } from 'lucide-react';
 
 const Planificador = ({ user }) => {
     const [view, setView] = useState('list'); // list, create, edit
@@ -139,6 +139,14 @@ const Planificador = ({ user }) => {
         setView('list');
     };
 
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+        if (!confirm('¿Eliminar planificación?')) return;
+        const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
+        await fetch(`${apiUrl}/planificaciones/${id}`, { method: 'DELETE' });
+        fetchPlanes();
+    };
+
     // VISTAS
     if (view === 'list') {
         return (
@@ -148,22 +156,37 @@ const Planificador = ({ user }) => {
                         <h2 className="text-3xl font-bold text-white">Planificaciones</h2>
                         <p className="text-slate-400">Gestión de Diseños Curriculares</p>
                     </div>
-                    <button onClick={() => { setView('create'); setFormData({ ...formData, temario: '' }); }} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
-                        <Bot className="w-5 h-5" /> Nueva con IA
-                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={() => { setView('create'); setFormData({ ...formData, temario: '' }); }} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                            <Bot className="w-5 h-5" /> Nueva con IA
+                        </button>
+                        <button onClick={() => { setView('upload_manual'); }} className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                            <UploadCloud className="w-5 h-5" /> Subir
+                        </button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {planes.map(p => (
-                        <div key={p.id} onClick={() => { setSelectedPlan(p); setEditorContent(p.contenido); setView('edit'); }} className="bg-slate-800 border border-white/10 p-5 rounded-xl hover:border-purple-500 cursor-pointer transition-all group">
-                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300">{p.titulo}</h3>
+                        <div key={p.id} onClick={() => { setSelectedPlan(p); setEditorContent(p.contenido); setView('edit'); }} className="bg-slate-800 border border-white/10 p-5 rounded-xl hover:border-purple-500 cursor-pointer transition-all group relative">
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 pr-6">{p.titulo}</h3>
                             <p className="text-sm text-slate-400 mb-4">Prof. {p.profesorNombre}</p>
+
                             <div className="flex justify-between items-center">
                                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${p.comentarios?.length > 0 ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
                                     {p.comentarios?.length > 0 ? 'Con Observaciones' : 'Borrador'}
                                 </span>
                                 <Edit3 className="w-4 h-4 text-slate-500 group-hover:text-white" />
                             </div>
+
+                            {!isDirectivo && (
+                                <button
+                                    onClick={(e) => handleDelete(e, p.id)}
+                                    className="absolute top-4 right-4 p-1 rounded-full hover:bg-red-500/20 text-slate-600 hover:text-red-500 transition-colors z-10"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     ))}
                     {planes.length === 0 && <p className="text-slate-500 col-span-3 text-center py-10">No hay planificaciones guardadas.</p>}
@@ -234,9 +257,36 @@ const Planificador = ({ user }) => {
                                 </div>
                             )}
 
+                            {/* Opción Template ABP */}
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                                <label className="flex items-center gap-2 text-sm font-bold text-cyan-400 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.usarFormatoABP || false}
+                                        onChange={(e) => setFormData({ ...formData, usarFormatoABP: e.target.checked })}
+                                        className="w-4 h-4 text-cyan-500 rounded focus:ring-cyan-500 bg-slate-800 border-slate-600"
+                                    />
+                                    Usar Formato Institucional (ABP)
+                                </label>
+                                <p className="text-[10px] text-slate-500 ml-6 mt-1">
+                                    Se utilizará el formato PDF oficial cargado en el sistema para estructurar la respuesta. (Anula otro formato subido).
+                                </p>
+                            </div>
+
                             <p className="text-[10px] text-slate-500 mt-2">
                                 Si es contenido, la IA extraerá temas de él. Si es formato, intentará imitar la estructura visual.
                             </p>
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="text-xs text-slate-400 mb-1 block">Indicaciones Adicionales (Opcional - Prompt Extra)</label>
+                            <textarea
+                                className="w-full bg-slate-900 border border-white/10 p-3 rounded text-white text-sm"
+                                placeholder="Escribe aquí cualquier instrucción específica para la IA..."
+                                rows="3"
+                                value={formData.extras}
+                                onChange={(e) => setFormData({ ...formData, extras: e.target.value })}
+                            ></textarea>
                         </div>
                     </div>
                     <button disabled={loading} className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded flex justify-center items-center gap-2">
@@ -246,6 +296,33 @@ const Planificador = ({ user }) => {
                 </form>
             </div>
         );
+    }
+
+    if (view === 'upload_manual') {
+        return (
+            <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2"><UploadCloud className="text-blue-400" /> Subir Planificación Existente</h2>
+                <div className="bg-slate-800 p-6 rounded-2xl border border-white/10 space-y-4">
+                    <div>
+                        <label className="block text-slate-300 mb-2">Título del Curso</label>
+                        <input className="w-full bg-slate-900 border border-white/10 p-3 rounded text-white" value={formData.temario} onChange={(e) => setFormData({ ...formData, temario: e.target.value })} placeholder="Ej: Matemática 1" />
+                    </div>
+                    <div>
+                        <label className="block text-slate-300 mb-2">Contenido (Pegar texto o Markdown)</label>
+                        <textarea
+                            className="w-full h-96 bg-slate-900 border border-white/10 p-3 rounded text-white font-mono text-sm"
+                            placeholder="# Planificación..."
+                            value={editorContent}
+                            onChange={(e) => setEditorContent(e.target.value)}
+                        ></textarea>
+                    </div>
+                    <button onClick={() => { setSelectedPlan({ titulo: formData.temario, isNew: true }); handleSave(); }} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded">
+                        Guardar Planificación
+                    </button>
+                    <button type="button" onClick={() => setView('list')} className="text-slate-400 text-sm hover:text-white w-full text-center">Cancelar</button>
+                </div>
+            </div>
+        )
     }
 
     if (view === 'edit') {
@@ -258,20 +335,59 @@ const Planificador = ({ user }) => {
                     </div>
                     <div className="flex gap-2">
                         <button onClick={() => window.print()} className="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm">PDF</button>
-                        <button onClick={handleSave} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-green-900/20">
-                            <Save className="w-5 h-5" /> Guardar Cambios
-                        </button>
+                        {!isDirectivo && (
+                            <button onClick={handleSave} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-green-900/20">
+                                <Save className="w-5 h-5" /> Guardar Cambios
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* EDITOR */}
-                    <div className="lg:col-span-2 bg-slate-900 border border-white/10 p-4 rounded-xl min-h-[500px]">
-                        <textarea
-                            className="w-full h-full bg-transparent text-white font-mono text-sm leading-relaxed outline-none resize-none"
-                            value={editorContent}
-                            onChange={(e) => setEditorContent(e.target.value)}
-                        ></textarea>
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="bg-slate-900 border border-white/10 p-4 rounded-xl min-h-[500px]">
+                            <textarea
+                                disabled={isDirectivo}
+                                className={`w-full h-full bg-transparent text-white font-mono text-sm leading-relaxed outline-none resize-none ${isDirectivo ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                value={editorContent}
+                                onChange={(e) => setEditorContent(e.target.value)}
+                            ></textarea>
+                        </div>
+
+                        {!isDirectivo && (
+                            <div className="bg-slate-800 border-white/10 p-4 rounded-xl flex gap-4 items-center">
+                                <Bot className="text-purple-400 w-6 h-6" />
+                                <input
+                                    className="flex-1 bg-slate-900 border border-white/10 p-2 rounded text-white text-sm"
+                                    placeholder="Ej: Reescribir la fundamentación más formal..."
+                                    id="refinePrompt"
+                                />
+                                <button
+                                    onClick={async () => {
+                                        const prompt = document.getElementById('refinePrompt').value;
+                                        if (!prompt) return;
+                                        setLoading(true);
+                                        try {
+                                            const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
+                                            const res = await fetch(`${apiUrl}/refinar`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ contenido: editorContent, instruccion: prompt })
+                                            });
+                                            const data = await res.json();
+                                            if (res.ok) setEditorContent(data.contenido);
+                                            else alert('Error al refinar');
+                                        } catch (e) { console.error(e); }
+                                        setLoading(false);
+                                    }}
+                                    disabled={loading}
+                                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2"
+                                >
+                                    {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} Refinar
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* COMENTARIOS */}
