@@ -9,6 +9,7 @@ const Cursos = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null); // Local user state needed to check role
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [cursoToEdit, setCursoToEdit] = useState(null); // Course to edit
     const navigate = useNavigate();
 
     // Fetch user role from local storage or context (simplified here)
@@ -79,11 +80,26 @@ const Cursos = () => {
         }
 
         try {
-            await fetch(url, { method: 'DELETE' });
-            fetchCursos(); // Reload
+            const res = await fetch(url, { method: 'DELETE' });
+            if (res.ok) {
+                fetchCursos(); // Reload
+            } else {
+                alert('Error al eliminar el curso');
+            }
         } catch (e) {
             alert('Error eliminando curso');
         }
+    };
+
+    const handleEdit = (e, curso) => {
+        e.stopPropagation();
+        setCursoToEdit(curso);
+        setIsModalOpen(true);
+    };
+
+    const handleCreate = () => {
+        setCursoToEdit(null);
+        setIsModalOpen(true);
     };
 
     const isDirector = user?.role === 'director' || user?.role === 'admin';
@@ -98,7 +114,7 @@ const Cursos = () => {
 
                 {isDirector && (
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleCreate}
                         className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-purple-900/20"
                     >
                         <Plus className="w-5 h-5" /> Nuevo Curso
@@ -120,7 +136,7 @@ const Cursos = () => {
                             {/* Actions for Director */}
                             {isDirector && (
                                 <div className="absolute top-2 right-2 z-30 flex gap-2">
-                                    <button onClick={(e) => { e.stopPropagation(); /* Edit logic */ }} className="p-2 bg-black/50 hover:bg-purple-600 text-white rounded-full backdrop-blur-md transition-colors">
+                                    <button onClick={(e) => handleEdit(e, curso)} className="p-2 bg-black/50 hover:bg-purple-600 text-white rounded-full backdrop-blur-md transition-colors">
                                         <Edit className="w-4 h-4" />
                                     </button>
                                     <button onClick={(e) => handleDelete(e, curso.id)} className="p-2 bg-black/50 hover:bg-red-600 text-white rounded-full backdrop-blur-md transition-colors">
@@ -173,6 +189,8 @@ const Cursos = () => {
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={fetchCursos}
                 user={user}
+                initialData={cursoToEdit}
+                isEditing={!!cursoToEdit}
             />
         </div>
     );

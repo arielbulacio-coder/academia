@@ -5,9 +5,10 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
     const [formData, setFormData] = useState({
         nombre: initialData?.nombre || '',
         descripcion: initialData?.descripcion || '',
-        imagen: '',
-        duracion_horas: '',
-        modalidad: 'presencial'
+        imagen: initialData?.imagen || '',
+        duracion_horas: initialData?.duracion_horas || '',
+        modalidad: initialData?.modalidad || 'presencial',
+        profesorId: initialData?.profesorId || ''
     });
     const [loading, setLoading] = useState(false);
     const [profesores, setProfesores] = useState([]);
@@ -15,8 +16,27 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
     useEffect(() => {
         if (isOpen) {
             fetchProfesores();
+            if (initialData) {
+                setFormData({
+                    nombre: initialData.nombre || '',
+                    descripcion: initialData.descripcion || '',
+                    imagen: initialData.imagen || '',
+                    duracion_horas: initialData.duracion_horas || '',
+                    modalidad: initialData.modalidad || 'presencial',
+                    profesorId: initialData.profesorId || ''
+                });
+            } else {
+                setFormData({
+                    nombre: '',
+                    descripcion: '',
+                    imagen: '',
+                    duracion_horas: '',
+                    modalidad: 'presencial',
+                    profesorId: ''
+                });
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     const fetchProfesores = async () => {
         const token = localStorage.getItem('token');
@@ -45,9 +65,14 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
             url = import.meta.env.VITE_API_URL.replace('auth', 'courses') + '/cursos';
         }
 
+        const method = initialData?.id ? 'PUT' : 'POST';
+        if (initialData?.id) {
+            url += `/${initialData.id}`;
+        }
+
         try {
             const res = await fetch(url, {
-                method: 'POST',
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
@@ -58,9 +83,8 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
 
             if (res.ok) {
                 const data = await res.json();
-                alert('Curso creado exitosamente');
 
-                if (onCourseCreated) {
+                if (onCourseCreated && !initialData?.id) {
                     onCourseCreated(data.id);
                 } else {
                     onSuccess();
@@ -92,7 +116,7 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-slate-800 rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="sticky top-0 bg-slate-800 border-b border-white/10 p-6 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-white">Nuevo Curso</h2>
+                    <h2 className="text-2xl font-bold text-white">{initialData ? 'Editar Curso' : 'Nuevo Curso'}</h2>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-white/10 rounded-lg transition-colors"
@@ -211,7 +235,7 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
                             disabled={loading}
                             className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Creando...' : 'Crear Curso'}
+                            {loading ? 'Guardando...' : (initialData ? 'Guardar Cambios' : 'Crear Curso')}
                         </button>
                     </div>
                 </form>
