@@ -102,7 +102,7 @@ const Cursos = () => {
         setIsModalOpen(true);
     };
 
-    const isDirector = user?.role === 'director' || user?.role === 'admin';
+    const canEdit = ['director', 'vicedirector', 'regente', 'secretario', 'admin'].includes(user?.role);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -112,7 +112,7 @@ const Cursos = () => {
                     <p className="text-slate-400">Capacitación Profesional y Técnica</p>
                 </div>
 
-                {isDirector && (
+                {canEdit && (
                     <button
                         onClick={handleCreate}
                         className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-purple-900/20"
@@ -133,8 +133,8 @@ const Cursos = () => {
                     {cursos.map(curso => (
                         <div key={curso.id} onClick={() => navigate(`/curso/${curso.id}`)} className="bg-slate-800/50 border border-white/10 rounded-2xl overflow-hidden group hover:border-purple-500/50 transition-all cursor-pointer flex flex-col h-full relative">
 
-                            {/* Actions for Director */}
-                            {isDirector && (
+                            {/* Actions for Authorized Roles */}
+                            {canEdit && (
                                 <div className="absolute top-2 right-2 z-30 flex gap-2">
                                     <button onClick={(e) => handleEdit(e, curso)} className="p-2 bg-black/50 hover:bg-purple-600 text-white rounded-full backdrop-blur-md transition-colors">
                                         <Edit className="w-4 h-4" />
