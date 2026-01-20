@@ -47,7 +47,7 @@ const Layout = ({ children, user, handleLogout }) => {
                             <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter leading-none">
                                 ACADEMIA
                             </h1>
-                            <span className="block text-white text-[10px] font-normal tracking-wide opacity-80">Técnico Profesional - IA</span>
+                            <span className="block text-white text-[10px] font-normal tracking-wide opacity-80">ETPIA</span>
                         </div>
                     </div>
                     <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-bold border-t border-white/10 pt-2">Ciclo 2026</p>
