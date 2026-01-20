@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud, Users, GraduationCap, X } from 'lucide-react';
+import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud, Users, GraduationCap, X, PlayCircle } from 'lucide-react';
+import EvaluacionPlayer from '../components/EvaluacionPlayer';
 
 const CourseDetail = ({ user }) => {
     const { id } = useParams();
@@ -11,7 +12,12 @@ const CourseDetail = ({ user }) => {
 
     // State for enrolling student
     const [enrollEmail, setEnrollEmail] = useState('');
+
     const [enrollLoading, setEnrollLoading] = useState(false);
+
+    // Exams
+    const [selectedEvaluacion, setSelectedEvaluacion] = useState(null);
+    const [misCalificaciones, setMisCalificaciones] = useState([]);
 
     const isInstructor = user?.role === 'profesor' || user?.role === 'admin' || user?.role === 'director';
 
@@ -37,9 +43,30 @@ const CourseDetail = ({ user }) => {
         }
     };
 
+    const fetchCalificaciones = async () => {
+        // Fetch grades for logged in student
+        // Assuming user.id is available. If using email, need endpoint change or user ID logic.
+        // We'll rely on user.id from props
+        if (!user || isInstructor) return;
+
+        try {
+            const res = await fetch(`${getBaseUrl()}/calificaciones/alumno/${user.id}`);
+            if (res.ok) {
+                setMisCalificaciones(await res.json());
+            }
+        } catch (e) { console.error(e) }
+    };
+
     useEffect(() => {
         fetchCurso();
-    }, [id]);
+        fetchCalificaciones();
+    }, [id, user]);
+
+    const handleEvaluationFinish = (data) => {
+        alert(`Examen finalizado. Nota: ${data.nota}/100`);
+        fetchCalificaciones(); // Refresh grades
+        // Modal stays open showing results until manual close
+    };
 
     const handleEnrollStudent = async (e) => {
         e.preventDefault();
@@ -166,11 +193,69 @@ const CourseDetail = ({ user }) => {
                                         </div>
                                     </div>
                                 ))}
-                                {!unidad.Materials?.length && !unidad.Actividads?.length && <p className="text-center text-slate-600 italic text-sm py-2">Unidad vacía</p>}
+                                {unidad.Evaluacions?.map(eva => {
+                                    const calificacion = misCalificaciones.find(c => c.EvaluacionId === eva.id);
+                                    const fueRendido = !!calificacion;
+
+                                    return (
+                                        <div key={eva.id} className={`flex items-center justify-between p-4 rounded-lg border-l-4 ${fueRendido ? (calificacion.nota >= 60 ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5') : 'border-purple-500 bg-purple-500/10'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${fueRendido ? 'bg-slate-800' : 'bg-purple-600'}`}>
+                                                    <GraduationCap className={`w-5 h-5 ${fueRendido ? (calificacion.nota >= 60 ? 'text-green-400' : 'text-red-400') : 'text-white'}`} />
+                                                </div>
+                                                <div>
+                                                    <h5 className="text-white font-bold">{eva.titulo}</h5>
+                                                    <p className="text-xs text-slate-400">Evaluación Automática • {eva.Pregunta?.length || 0} Preguntas</p>
+
+                                                    {fueRendido && (
+                                                        <div className="mt-1 flex items-center gap-2">
+                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${calificacion.nota >= 60 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                                                Nota: {calificacion.nota.toFixed(1)}/100
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-500">Rendido el {new Date(calificacion.fecha).toLocaleDateString()}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                {!isInstructor && !fueRendido && (
+                                                    <button
+                                                        onClick={() => setSelectedEvaluacion(eva)}
+                                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-900/20 transition-transform active:scale-95"
+                                                    >
+                                                        <PlayCircle className="w-4 h-4" /> Comenzar
+                                                    </button>
+                                                )}
+                                                {!isInstructor && fueRendido && (
+                                                    <button className="text-slate-500 text-sm font-medium cursor-not-allowed">
+                                                        Completado
+                                                    </button>
+                                                )}
+                                                {isInstructor && (
+                                                    <div className="flex gap-2">
+                                                        <span className="text-xs text-slate-500 self-center mr-2">Visible para alumnos</span>
+                                                        <button className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><FileText className="w-4 h-4" /></button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                                {!unidad.Materials?.length && !unidad.Actividads?.length && !unidad.Evaluacions?.length && <p className="text-center text-slate-600 italic text-sm py-2">Unidad vacía</p>}
                             </div>
                         </div>
                     ))}
                     {!curso.Unidads?.length && <div className="text-center py-12 text-slate-500">No hay contenido todavía.</div>}
+
+                    {selectedEvaluacion && (
+                        <EvaluacionPlayer
+                            evaluacion={selectedEvaluacion}
+                            alumnoId={user.id}
+                            onFinish={handleEvaluationFinish}
+                            onClose={() => setSelectedEvaluacion(null)}
+                        />
+                    )}
                 </div>
             )}
 

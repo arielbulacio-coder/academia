@@ -12,6 +12,10 @@ const ObservacionClase = require('./models/ObservacionClase');
 const Planificacion = require('./models/Planificacion');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const PDFDocument = require('pdfkit');
+const Evaluacion = require('./models/Evaluacion');
+const Pregunta = require('./models/Pregunta');
+const Opcion = require('./models/Opcion');
+const Calificacion = require('./models/Calificacion');
 
 const app = express();
 const port = process.env.PORT || 3002;
@@ -65,7 +69,17 @@ app.get('/cursos/:id', async (req, res) => {
             include: [
                 {
                     model: Unidad,
-                    include: [Material, Actividad]
+                    include: [
+                        Material,
+                        Actividad,
+                        {
+                            model: Evaluacion,
+                            include: [{
+                                model: Pregunta,
+                                include: [Opcion]
+                            }]
+                        }
+                    ]
                 },
                 {
                     model: Inscripcion
@@ -355,6 +369,295 @@ app.post('/planificar', async (req, res) => {
     } catch (error) {
         console.error("Gemini Error:", error);
         res.status(500).json({ message: 'Error generando planificación', detail: error.message });
+    }
+});
+
+// 6. GENERACIÓN AUTOMÁTICA DE AULA (AI)
+app.post('/cursos/:id/generar-contenido', async (req, res) => {
+    const { apiKey, planificacionTexto } = req.body;
+    const finalKey = apiKey || process.env.GEMINI_API_KEY;
+
+    if (!finalKey) return res.status(400).json({ message: 'API Key requerida' });
+
+    try {
+        const curso = await Curso.findByPk(req.params.id);
+        if (!curso) return res.status(404).json({ message: 'Curso no encontrado' });
+
+        const genAI = new GoogleGenerativeAI(finalKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+        Actúa como un diseñador instruccional experto y arquitecto de e-learning.
+        Basado en la siguiente PLANIFICACIÓN del curso:
+        
+        "${planificacionTexto}"
+        
+        Tu tarea es generar la estructura COMPLETA del aula virtual para este curso en formato JSON.
+        
+        DEBES GENERAR:
+        1. Unidades (Basadas en la planificación)
+        2. Para cada Unidad:
+           - Materiales de estudio: Propón videos (títulos y descripciones ficticias pero realistas, tipo 'Video Explicativo: ...'), artículos PDF (títulos), enlaces.
+           - Actividades: Propón actividades de fijación y actividades profesionalizantes.
+           - Evaluaciones: Crea un examen al final de la unidad con preguntas Multiple Choice.
+        
+        FORMATO JSON REQUERIDO:
+        [
+          {
+            "titulo": "Título de la Unidad 1",
+            "descripcion": "Descripción breve",
+            "orden": 1,
+            "materiales": [
+              { "titulo": "Nombre del recurso", "tipo": "video|pdf|link", "contenido": "url_simulada_o_descripcion", "descripcion": "..." }
+            ],
+            "actividades": [
+              { "titulo": "Nombre Actividad", "tipo": "entrega|formulario", "consigna": "Instrucciones..." }
+            ],
+            "evaluaciones": [
+              {
+                "titulo": "Examen Unidad 1",
+                "preguntas": [
+                  {
+                    "enunciado": "¿Pregunta 1?",
+                    "puntos": 10,
+                    "opciones": [
+                      { "texto": "Opción A", "esCorrecta": false },
+                      { "texto": "Opción B", "esCorrecta": true }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+        
+        IMPORTANTE: Devuelve SOLO el JSON válido, sin markdown ni explicaciones adicionales.`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let text = response.text();
+
+        // Limpiar markdown si existe
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        const estructura = JSON.parse(text);
+
+        // Guardar estructura en BD (Transaccional sería ideal, lo hacemos secuencial por simplicidad)
+        for (const unidadData of estructura) {
+            const unidad = await Unidad.create({
+                titulo: unidadData.titulo,
+                descripcion: unidadData.descripcion,
+                orden: unidadData.orden || 0,
+                CursoId: curso.id
+            });
+
+            // Materiales
+            if (unidadData.materiales) {
+                for (const mat of unidadData.materiales) {
+                    await Material.create({ ...mat, UnidadId: unidad.id });
+                }
+            }
+
+            // Actividades
+            if (unidadData.actividades) {
+                for (const act of unidadData.actividades) {
+                    await Actividad.create({ ...act, UnidadId: unidad.id });
+                }
+            }
+
+            // Evaluaciones
+            if (unidadData.evaluaciones) {
+                for (const evaData of unidadData.evaluaciones) {
+                    const evaluacion = await Evaluacion.create({
+                        titulo: evaData.titulo,
+                        UnidadId: unidad.id
+                    });
+
+                    if (evaData.preguntas) {
+                        for (const pregData of evaData.preguntas) {
+                            const pregunta = await Pregunta.create({
+                                enunciado: pregData.enunciado,
+                                puntos: pregData.puntos || 1,
+                                EvaluacionId: evaluacion.id
+                            });
+
+                            if (pregData.opciones) {
+                                for (const opData of pregData.opciones) {
+                                    await Opcion.create({ ...opData, PreguntaId: pregunta.id });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        res.json({ message: 'Contenido generado exitosamente', estructura });
+
+    } catch (error) {
+        console.error("Error Generando Contenido:", error);
+        res.status(500).json({ message: 'Error generando contenido', error: error.message });
+    }
+});
+
+// 7. CALIFICACIÓN Y ENTREGA DE EXÁMENES
+app.post('/evaluaciones/:id/entregar', async (req, res) => {
+    // req.body: { alumnoId: 123, respuestas: { "preguntaId_1": "opcionId_A", "preguntaId_2": "opcionId_C" } }
+    const { alumnoId, respuestas } = req.body;
+
+    try {
+        const evaluacion = await Evaluacion.findByPk(req.params.id, {
+            include: [{
+                model: Pregunta,
+                include: [Opcion]
+            }]
+        });
+
+        if (!evaluacion) return res.status(404).json({ message: 'Evaluación no encontrada' });
+
+        let puntajeTotal = 0;
+        let puntajeObtenido = 0;
+        let detalleCorreccion = [];
+
+        for (const pregunta of evaluacion.Pregunta) {
+            puntajeTotal += pregunta.puntos;
+
+            const opcionElegidaId = respuestas[pregunta.id];
+            // Buscar la opción correcta
+            const opcionCorrecta = pregunta.Opcions.find(o => o.esCorrecta);
+            const opcionElegida = pregunta.Opcions.find(o => o.id == opcionElegidaId);
+
+            const esCorrecta = opcionElegida && opcionElegida.esCorrecta;
+
+            if (esCorrecta) {
+                puntajeObtenido += pregunta.puntos;
+            }
+
+            detalleCorreccion.push({
+                preguntaId: pregunta.id,
+                esCorrecta,
+                opcionCorrectaId: opcionCorrecta ? opcionCorrecta.id : null,
+                opcionElegidaId
+            });
+        }
+
+        const notaFinal = puntajeTotal > 0 ? (puntajeObtenido / puntajeTotal) * 100 : 0;
+
+        // Guardar Nota
+        const calificacion = await Calificacion.create({
+            AlumnoId: alumnoId,
+            EvaluacionId: evaluacion.id,
+            nota: notaFinal,
+            detalles: detalleCorreccion
+        });
+
+        res.json({
+            nota: notaFinal,
+            puntajeObtenido,
+            puntajeTotal,
+            detalle: detalleCorreccion
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/calificaciones/alumno/:id', async (req, res) => {
+    try {
+        const notas = await Calificacion.findAll({
+            where: { AlumnoId: req.params.id },
+            include: [Evaluacion]
+        });
+        res.json(notas);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 8. IMPORTAR AULA (CLONAR)
+app.post('/cursos/:id/importar', async (req, res) => {
+    const { cursoOrigenId } = req.body; // ID del curso desde donde copiamos
+    const cursoDestinoId = req.params.id;
+
+    try {
+        const cursoOrigen = await Curso.findByPk(cursoOrigenId, {
+            include: [{
+                model: Unidad,
+                include: [
+                    Material,
+                    Actividad,
+                    {
+                        model: Evaluacion,
+                        include: [{ model: Pregunta, include: [Opcion] }]
+                    }
+                ]
+            }]
+        });
+
+        if (!cursoOrigen) return res.status(404).json({ message: 'Curso origen no encontrado' });
+
+        // Clonar estructura
+        for (const unidadOrigen of cursoOrigen.Unidads) {
+            const unidadNueva = await Unidad.create({
+                titulo: unidadOrigen.titulo,
+                descripcion: unidadOrigen.descripcion,
+                orden: unidadOrigen.orden,
+                CursoId: cursoDestinoId
+            });
+
+            // Clonar Materiales
+            for (const mat of unidadOrigen.Materials) {
+                await Material.create({
+                    titulo: mat.titulo,
+                    tipo: mat.tipo,
+                    contenido: mat.contenido,
+                    descripcion: mat.descripcion,
+                    UnidadId: unidadNueva.id
+                });
+            }
+
+            // Clonar Actividades
+            for (const act of unidadOrigen.Actividads) {
+                await Actividad.create({
+                    titulo: act.titulo,
+                    tipo: act.tipo,
+                    consigna: act.consigna,
+                    UnidadId: unidadNueva.id
+                });
+            }
+
+            // Clonar Evaluaciones
+            for (const eva of unidadOrigen.Evaluacions) {
+                const evaNueva = await Evaluacion.create({
+                    titulo: eva.titulo,
+                    descripcion: eva.descripcion,
+                    UnidadId: unidadNueva.id
+                });
+
+                for (const preg of eva.Pregunta) {
+                    const pregNueva = await Pregunta.create({
+                        enunciado: preg.enunciado,
+                        puntos: preg.puntos,
+                        EvaluacionId: evaNueva.id
+                    });
+
+                    for (const op of preg.Opcions) {
+                        await Opcion.create({
+                            texto: op.texto,
+                            esCorrecta: op.esCorrecta,
+                            PreguntaId: pregNueva.id
+                        });
+                    }
+                }
+            }
+        }
+
+        res.json({ message: 'Contenido importado exitosamente' });
+
+    } catch (error) {
+        console.error("Error importando:", error);
+        res.status(500).json({ error: error.message });
     }
 });
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bot, Save, FileText, Send, Calendar, MessageSquare, Edit3, Eye, Trash2, UploadCloud, RefreshCw } from 'lucide-react';
+import { Bot, Save, FileText, Send, Calendar, MessageSquare, Edit3, Eye, Trash2, UploadCloud, RefreshCw, Sparkles } from 'lucide-react';
+import CursoModal from '../components/CursoModal';
 
 const Planificador = ({ user }) => {
     const [view, setView] = useState('list'); // list, create, edit
@@ -20,6 +21,9 @@ const Planificador = ({ user }) => {
     // Archivos
     const [fileDiseno, setFileDiseno] = useState(null);
     const [fileFormato, setFileFormato] = useState(null);
+
+    // Modal Crear Curso desde Plan
+    const [isCursoModalOpen, setIsCursoModalOpen] = useState(false);
 
     const isDirectivo = ['director', 'vicedirector', 'regente'].includes(user.role);
 
@@ -148,6 +152,39 @@ const Planificador = ({ user }) => {
         const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
         await fetch(`${apiUrl}/planificaciones/${id}`, { method: 'DELETE' });
         fetchPlanes();
+    };
+
+    const handleCreateCourseFromPlan = async () => {
+        setIsCursoModalOpen(true);
+    };
+
+    const handleCourseCreated = async (newCourseId) => {
+        setLoading(true);
+        const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('auth', 'courses') : 'http://localhost:3002';
+        try {
+            // Trigger AI Content Generation
+            const res = await fetch(`${apiUrl}/cursos/${newCourseId}/generar-contenido`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    planificacionTexto: editorContent
+                    // apiKey can be optional if relying on env backend side, or passed if user provided one in session
+                })
+            });
+
+            if (res.ok) {
+                alert('Aula Virtual generada y contenido creado exitosamente basado en esta planificación.');
+                setIsCursoModalOpen(false);
+            } else {
+                alert('El curso se creó, pero hubo un error generando el contenido automático.');
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert('Error generando contenido del aula');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // VISTAS
@@ -331,6 +368,14 @@ const Planificador = ({ user }) => {
                         <h2 className="text-2xl font-bold text-white">{selectedPlan.titulo}</h2>
                     </div>
                     <div className="flex gap-2">
+                        {!isDirectivo && (
+                            <button
+                                onClick={handleCreateCourseFromPlan}
+                                className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-purple-900/40 animate-pulse-slow"
+                            >
+                                <Sparkles className="w-5 h-5" /> Crear Aula con IA
+                            </button>
+                        )}
                         <button onClick={() => window.print()} className="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm">PDF</button>
                         {!isDirectivo && (
                             <button onClick={handleSave} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-green-900/20">
@@ -339,6 +384,15 @@ const Planificador = ({ user }) => {
                         )}
                     </div>
                 </div>
+
+                <CursoModal
+                    isOpen={isCursoModalOpen}
+                    onClose={() => setIsCursoModalOpen(false)}
+                    onSuccess={() => { /* Handled manually via prop injection if we mod CursoModal or we fetch list */ }}
+                    onCourseCreated={handleCourseCreated}
+                    user={user}
+                    initialData={{ nombre: selectedPlan.titulo, descripcion: `Curso basado en planificación: ${selectedPlan.titulo}` }}
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* EDITOR */}
@@ -420,7 +474,7 @@ const Planificador = ({ user }) => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
         );
     }
 };

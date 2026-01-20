@@ -1,10 +1,10 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 
-const CursoModal = ({ isOpen, onClose, onSuccess, user }) => {
+const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initialData }) => {
     const [formData, setFormData] = useState({
-        nombre: '',
-        descripcion: '',
+        nombre: initialData?.nombre || '',
+        descripcion: initialData?.descripcion || '',
         imagen: '',
         duracion_horas: '',
         modalidad: 'presencial'
@@ -57,8 +57,15 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user }) => {
             });
 
             if (res.ok) {
+                const data = await res.json();
                 alert('Curso creado exitosamente');
-                onSuccess();
+
+                if (onCourseCreated) {
+                    onCourseCreated(data.id);
+                } else {
+                    onSuccess();
+                }
+
                 onClose();
                 setFormData({
                     nombre: '',

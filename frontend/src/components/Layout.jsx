@@ -41,10 +41,15 @@ const Layout = ({ children, user, handleLogout }) => {
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex w-64 bg-slate-900 border-r border-white/10 flex-col fixed h-full z-20">
                 <div className="p-6">
-                    <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter leading-none">
-                        ACADEMIA
-                        <span className="block text-white text-xs font-normal mt-1 tracking-normal">Técnico Profesional</span>
-                    </h1>
+                    <div className="flex items-center gap-3">
+                        <img src="/logo.png" alt="Academia Logo" className="w-12 h-12 object-contain" />
+                        <div>
+                            <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tighter leading-none">
+                                ACADEMIA
+                            </h1>
+                            <span className="block text-white text-[10px] font-normal tracking-wide opacity-80">Técnico Profesional - IA</span>
+                        </div>
+                    </div>
                     <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-bold border-t border-white/10 pt-2">Ciclo 2026</p>
                 </div>
 
@@ -88,9 +93,11 @@ const Layout = ({ children, user, handleLogout }) => {
                 </div>
             </aside>
 
-            {/* Mobile Header */}
             <div className="md:hidden fixed top-0 w-full bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-30 px-4 py-3 flex justify-between items-center">
-                <span className="font-bold text-white">ACADEMIA</span>
+                <div className="flex items-center gap-2">
+                    <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+                    <span className="font-bold text-white">ACADEMIA</span>
+                </div>
                 <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white">
                     {mobileMenuOpen ? <X /> : <Menu />}
                 </button>
