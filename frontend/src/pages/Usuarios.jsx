@@ -102,8 +102,8 @@ const Usuarios = ({ user }) => {
             </div>
 
             {/* TABLA USERS */}
-            <div className="bg-slate-800 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-                <table className="w-full text-left border-collapse">
+            <div className="bg-slate-800 border border-white/10 rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[600px]">
                     <thead className="bg-slate-900/50 text-slate-400 uppercase text-xs">
                         <tr>
                             <th className="p-4">Usuario</th>

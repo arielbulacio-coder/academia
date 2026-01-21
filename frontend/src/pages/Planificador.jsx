@@ -237,7 +237,7 @@ const Planificador = ({ user }) => {
 
     if (view === 'create') {
         return (
-            <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in w-full overflow-hidden">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2"><Bot className="text-purple-400" /> Generar Nueva Planificación</h2>
 
                 <form onSubmit={handleGenerate} className="space-y-4 bg-slate-800 p-6 rounded-2xl border border-white/10">
@@ -474,6 +474,7 @@ const Planificador = ({ user }) => {
                         </div>
                     </div>
                 </div>
+            </div>
             </div >
         );
     }
