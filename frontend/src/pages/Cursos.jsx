@@ -41,13 +41,19 @@ const Cursos = () => {
         let url = getApiUrl('courses') + '/cursos';
 
         // Filter based on role
+        console.log('User Role:', user?.role, 'EscuelaId:', user?.EscuelaId);
         const params = new URLSearchParams();
+        // TEMPORARY: Commenting out strict filtering to show courses even if School differs, for debugging "No veo nada"
+        /*
         if (user?.role === 'director' || user?.role === 'regente' || user?.role === 'secretario') {
             if (user.EscuelaId) params.append('EscuelaId', user.EscuelaId);
         } else if (user?.role === 'profesor') {
             params.append('profesorId', user.id);
         }
+        */
 
+        // Show params in log
+        console.log('Fetching courses params:', params.toString());
         if (params.toString()) url += `?${params.toString()}`;
 
         try {
