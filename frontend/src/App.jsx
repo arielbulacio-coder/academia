@@ -139,8 +139,9 @@ function App() {
       <div className="relative w-full max-w-md">
         {/* Header Branding */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <img src="/logo.png" alt="ETPIA" className="h-24 w-auto object-contain drop-shadow-2xl" />
+          <div className="flex justify-center mb-8 relative">
+            <div className="absolute inset-0 bg-cyan-500/20 blur-[50px] rounded-full"></div>
+            <img src="/logo.png" alt="ETPIA" className="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.5)] relative z-10 animate-in zoom-in duration-700" />
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight mb-2">
             Academia Técnico Profesional
