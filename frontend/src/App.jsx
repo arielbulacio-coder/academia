@@ -10,22 +10,9 @@ import Observacion from './pages/Observacion'
 import Usuarios from './pages/Usuarios'
 import Planificador from './pages/Planificador'
 
-const getAuthUrl = () => {
-  // 1. Prioritize dynamic detection to ensure it works on the current domain/IP
-  if (typeof window !== 'undefined' && window.location.hostname.includes('nip.io')) {
-    // Dynamically replace subdomain 'academia' (or empty) with 'auth'
-    // Uses regex to be safer: replace 'academia' or just prepend 'auth' if using IP?
-    // Given the Nginx setup, we expect 'academia.149...'
-    // If it's just the IP, this logic might fail, so we stick to hostname string manip for nip.io
-    return window.location.protocol + '//' + window.location.hostname.replace('academia.', 'auth.');
-  }
+import { getApiUrl } from './utils/api';
 
-  // 2. Fallback to build-time variable
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-
-  // 3. Last resort
-  return 'http://auth.149.50.130.160.nip.io';
-};
+// const getAuthUrl removed in favor of util
 
 function App() {
   const [user, setUser] = useState(null)
@@ -49,7 +36,7 @@ function App() {
   }, [])
 
   const fetchUser = async (token) => {
-    const apiUrl = getAuthUrl()
+    const apiUrl = getApiUrl('auth')
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 seg timeout
@@ -89,7 +76,7 @@ function App() {
     const endpoint = isLogin ? '/auth/login' : '/auth/register'
     const body = isLogin ? { email: formData.email, password: formData.password } : formData
 
-    const apiUrl = getAuthUrl()
+    const apiUrl = getApiUrl('auth')
     try {
       const res = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',

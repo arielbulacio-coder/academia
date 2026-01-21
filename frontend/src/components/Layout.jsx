@@ -37,7 +37,7 @@ const Layout = ({ children, user, handleLogout }) => {
     const navigation = getNavItems();
 
     return (
-        <div className="min-h-screen bg-slate-900 flex">
+        <div className="min-h-screen bg-slate-900 flex overflow-x-hidden">
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex w-64 bg-slate-900 border-r border-white/10 flex-col fixed h-full z-20">
                 <div className="p-6">

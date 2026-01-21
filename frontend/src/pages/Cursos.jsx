@@ -4,6 +4,8 @@ import { Edit, Trash2, Plus, Users } from 'lucide-react';
 import CursoModal from '../components/CursoModal';
 
 
+import { getApiUrl } from '../utils/api';
+
 const Cursos = () => {
     const [cursos, setCursos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ const Cursos = () => {
     }, []);
 
     const fetchUserRole = async (token) => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+        const apiUrl = getApiUrl('auth');
         try {
             const res = await fetch(`${apiUrl}/auth/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -35,10 +37,7 @@ const Cursos = () => {
     };
 
     const fetchCursos = async () => {
-        let url = 'http://localhost:3002/cursos';
-        if (import.meta.env.VITE_API_URL) {
-            url = import.meta.env.VITE_API_URL.replace('auth', 'courses') + '/cursos';
-        }
+        let url = getApiUrl('courses') + '/cursos';
 
         // Filter based on role
         const params = new URLSearchParams();
@@ -74,10 +73,7 @@ const Cursos = () => {
         e.stopPropagation();
         if (!confirm('¿Seguro que desea eliminar este curso? Se borrarán todos los materiales.')) return;
 
-        let url = 'http://localhost:3002/cursos/' + id;
-        if (import.meta.env.VITE_API_URL) {
-            url = import.meta.env.VITE_API_URL.replace('auth', 'courses') + '/cursos/' + id;
-        }
+        let url = getApiUrl('courses') + '/cursos/' + id;
 
         try {
             const token = localStorage.getItem('token');

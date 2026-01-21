@@ -1,6 +1,8 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 
+import { getApiUrl } from '../utils/api';
+
 const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initialData }) => {
     const [formData, setFormData] = useState({
         nombre: initialData?.nombre || '',
@@ -42,7 +44,7 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        let url = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        let url = getApiUrl('auth');
         // endpoint is /users?role=profesor&EscuelaId=... but let's just get all professors for this school
         // If director, they have an EscuelaId.
         try {
@@ -60,10 +62,7 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
         e.preventDefault();
         setLoading(true);
 
-        let url = 'http://localhost:3002/cursos';
-        if (import.meta.env.VITE_API_URL) {
-            url = import.meta.env.VITE_API_URL.replace('auth', 'courses') + '/cursos';
-        }
+        let url = getApiUrl('courses') + '/cursos';
 
         const method = initialData?.id ? 'PUT' : 'POST';
         if (initialData?.id) {
