@@ -38,6 +38,7 @@ function App() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [authChecking, setAuthChecking] = useState(false) // No bloquear inicio
+  const [showAbout, setShowAbout] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -254,10 +255,57 @@ function App() {
           </div>
         </div>
 
-        <footer className="mt-8 text-center text-slate-500 text-xs">
+        <footer className="mt-8 text-center text-slate-500 text-xs flex flex-col items-center gap-3">
+          <button
+            onClick={() => setShowAbout(true)}
+            className="text-cyan-400 hover:text-purple-400 transition-colors font-medium flex items-center gap-1"
+          >
+            <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-[10px] font-bold">i</span>
+            Acerca de ETPIA
+          </button>
           <p>© 2024 Academia Education System - v2.0 Enterprise</p>
         </footer>
       </div>
+
+      {/* About Modal */}
+      {showAbout && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full p-8 relative shadow-2xl shadow-purple-900/50">
+            <button
+              onClick={() => setShowAbout(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="w-32 h-32 flex-shrink-0 bg-white/5 rounded-full flex items-center justify-center border border-white/10">
+                <img src="/logo.png" alt="ETPIA Logo" className="w-24 h-24 object-contain" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 mb-4">
+                  Sobre ETPIA
+                </h2>
+                <p className="text-slate-300 text-lg leading-relaxed mb-4">
+                  <strong className="text-white">ETPIA</strong> es una aplicación que utiliza la <span className="text-cyan-400">Inteligencia Artificial</span> para potenciar las herramientas de enseñanza y aprendizaje.
+                </p>
+                <p className="text-slate-400">
+                  Nuestra misión es facilitar la apropiación del conocimiento mediante tecnologías innovadoras que asisten tanto a educadores como a estudiantes en su recorrido académico, haciendo el proceso más dinámico, personalizado y eficiente.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setShowAbout(false)}
+                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white rounded-lg font-medium transition-all shadow-lg shadow-purple-900/40"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
