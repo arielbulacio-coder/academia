@@ -475,7 +475,6 @@ const Planificador = ({ user }) => {
                     </div>
                 </div>
             </div>
-            </div >
         );
     }
 };
