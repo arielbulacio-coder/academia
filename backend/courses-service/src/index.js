@@ -114,7 +114,17 @@ app.delete('/cursos/:id', async (req, res) => {
     }
 });
 
-// 2. Inscripciones
+// 2. Unidades y Contenidos (Manual)
+app.post('/unidades', async (req, res) => {
+    try {
+        const unidad = await Unidad.create(req.body);
+        res.status(201).json(unidad);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// 2b. Inscripciones
 app.post('/inscripciones', async (req, res) => {
     try {
         const inscripcion = await Inscripcion.create(req.body);

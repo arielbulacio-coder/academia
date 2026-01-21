@@ -9,6 +9,9 @@ const CourseDetail = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('contenidos'); // contenidos, alumnos
     const [showEnrollModal, setShowEnrollModal] = useState(false);
+    const [showUnitModal, setShowUnitModal] = useState(false); // New state for unit modal
+    const [newUnitTitle, setNewUnitTitle] = useState(''); // New state for unit title
+    const [creatingUnit, setCreatingUnit] = useState(false);
 
     // State for enrolling student
     const [enrollEmail, setEnrollEmail] = useState('');
@@ -95,6 +98,33 @@ const CourseDetail = ({ user }) => {
         }
     };
 
+    const handleCreateUnit = async (e) => {
+        e.preventDefault();
+        setCreatingUnit(true);
+        try {
+            const res = await fetch(`${getBaseUrl()}/unidades`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    titulo: newUnitTitle,
+                    CursoId: id,
+                    orden: (curso.Unidads?.length || 0) + 1
+                })
+            });
+            if (res.ok) {
+                setNewUnitTitle('');
+                setShowUnitModal(false);
+                fetchCurso();
+            } else {
+                alert('Error creando unidad');
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setCreatingUnit(false);
+        }
+    };
+
     if (loading) return <div className="text-white p-8">Cargando aula virtual...</div>;
     if (!curso) return <div className="text-white p-8">Curso no encontrado.</div>;
 
@@ -155,7 +185,7 @@ const CourseDetail = ({ user }) => {
                             {/* Instructor Actions */}
                             {isInstructor && (
                                 <div className="flex gap-3 mb-6">
-                                    <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium shadow-lg shadow-purple-900/20">
+                                    <button onClick={() => setShowUnitModal(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium shadow-lg shadow-purple-900/20">
                                         <PlusCircle className="w-4 h-4" />
                                         Nueva Unidad
                                     </button>
@@ -398,6 +428,37 @@ const CourseDetail = ({ user }) => {
                                 <button type="button" onClick={() => setShowEnrollModal(false)} className="px-4 py-2 text-slate-300 hover:bg-white/5 rounded-lg">Cancelar</button>
                                 <button type="submit" disabled={enrollLoading} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold shadow-lg shadow-purple-900/20">
                                     {enrollLoading ? 'Inscribiendo...' : 'Confirmar Inscripción'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Nueva Unidad */}
+            {showUnitModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-white">Nueva Unidad</h3>
+                            <button onClick={() => setShowUnitModal(false)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleCreateUnit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Título de la Unidad</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ej. Unidad 1: Introducción"
+                                    value={newUnitTitle}
+                                    onChange={(e) => setNewUnitTitle(e.target.value)}
+                                    className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button type="button" onClick={() => setShowUnitModal(false)} className="px-4 py-2 text-slate-300 hover:bg-white/5 rounded-lg">Cancelar</button>
+                                <button type="submit" disabled={creatingUnit} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold shadow-lg shadow-purple-900/20">
+                                    {creatingUnit ? 'Creando...' : 'Crear Unidad'}
                                 </button>
                             </div>
                         </form>
