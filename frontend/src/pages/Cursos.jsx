@@ -38,7 +38,8 @@ const Cursos = () => {
     };
 
     const fetchCursos = async () => {
-        let url = getApiUrl('courses') + '/cursos';
+        const baseUrl = getApiUrl('courses');
+        let url = `${baseUrl}/cursos`;
 
         // Filter based on role
         console.log('User Role:', user?.role, 'EscuelaId:', user?.EscuelaId);
