@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud, Users, GraduationCap, X, PlayCircle } from 'lucide-react';
+import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud, Users, GraduationCap, X, PlayCircle, Calendar } from 'lucide-react';
 import EvaluacionPlayer from '../components/EvaluacionPlayer';
 
 const CourseDetail = ({ user }) => {
@@ -144,171 +144,234 @@ const CourseDetail = ({ user }) => {
                 )}
             </div>
 
-            {/* TAB: CONTENIDOS */}
-            {activeTab === 'contenidos' && (
-                <div className="space-y-6">
-                    {/* Instructor Actions */}
-                    {isInstructor && (
-                        <div className="flex gap-3 mb-6">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium shadow-lg shadow-purple-900/20">
-                                <PlusCircle className="w-4 h-4" />
-                                Nueva Unidad
-                            </button>
-                        </div>
-                    )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
-                    {curso.Unidads && curso.Unidads.map((unidad) => (
-                        <div key={unidad.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-                            <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white tracking-tight">{unidad.titulo}</h3>
-                                    {unidad.descripcion && <p className="text-slate-400 text-sm mt-0.5">{unidad.descripcion}</p>}
+                {/* Main Content Column (Left) */}
+                <div className="lg:col-span-2 space-y-6">
+
+                    {/* TAB: CONTENIDOS */}
+                    {activeTab === 'contenidos' && (
+                        <div className="space-y-6">
+                            {/* Instructor Actions */}
+                            {isInstructor && (
+                                <div className="flex gap-3 mb-6">
+                                    <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium shadow-lg shadow-purple-900/20">
+                                        <PlusCircle className="w-4 h-4" />
+                                        Nueva Unidad
+                                    </button>
                                 </div>
-                                {isInstructor && (
-                                    <div className="flex gap-2">
-                                        <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Subir Material"><UploadCloud className="w-4 h-4" /></button>
-                                        <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Crear Actividad"><CheckSquare className="w-4 h-4" /></button>
-                                    </div>
-                                )}
-                            </div>
+                            )}
 
-                            <div className="p-5 space-y-3">
-                                {unidad.Materials?.map(mat => (
-                                    <div key={mat.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group cursor-pointer">
-                                        <div className="p-2 bg-slate-900 rounded-lg border border-white/5">
-                                            {getIcon(mat.tipo)}
-                                        </div>
+                            {curso.Unidads && curso.Unidads.map((unidad) => (
+                                <div key={unidad.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                                    <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
                                         <div>
-                                            <h5 className="text-white font-medium text-sm group-hover:text-purple-300 transition-colors">{mat.titulo}</h5>
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider">{mat.tipo}</p>
+                                            <h3 className="text-lg font-bold text-white tracking-tight">{unidad.titulo}</h3>
+                                            {unidad.descripcion && <p className="text-slate-400 text-sm mt-0.5">{unidad.descripcion}</p>}
                                         </div>
+                                        {isInstructor && (
+                                            <div className="flex gap-2">
+                                                <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Subir Material"><UploadCloud className="w-4 h-4" /></button>
+                                                <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Crear Actividad"><CheckSquare className="w-4 h-4" /></button>
+                                            </div>
+                                        )}
                                     </div>
-                                ))}
-                                {unidad.Actividads?.map(act => (
-                                    <div key={act.id} className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-transparent border-l-2 border-purple-500">
-                                        <CheckSquare className="w-5 h-5 text-purple-400 ml-1" />
-                                        <div>
-                                            <h5 className="text-white font-medium text-sm">{act.titulo}</h5>
-                                            <p className="text-xs text-purple-300/60 font-mono mt-0.5">VENCE: {new Date(act.fechaEntrega).toLocaleDateString()}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                {unidad.Evaluacions?.map(eva => {
-                                    const calificacion = misCalificaciones.find(c => c.EvaluacionId === eva.id);
-                                    const fueRendido = !!calificacion;
 
-                                    return (
-                                        <div key={eva.id} className={`flex items-center justify-between p-4 rounded-lg border-l-4 ${fueRendido ? (calificacion.nota >= 60 ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5') : 'border-purple-500 bg-purple-500/10'}`}>
-                                            <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-lg ${fueRendido ? 'bg-slate-800' : 'bg-purple-600'}`}>
-                                                    <GraduationCap className={`w-5 h-5 ${fueRendido ? (calificacion.nota >= 60 ? 'text-green-400' : 'text-red-400') : 'text-white'}`} />
+                                    <div className="p-5 space-y-3">
+                                        {unidad.Materials?.map(mat => (
+                                            <div key={mat.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group cursor-pointer">
+                                                <div className="p-2 bg-slate-900 rounded-lg border border-white/5">
+                                                    {getIcon(mat.tipo)}
                                                 </div>
                                                 <div>
-                                                    <h5 className="text-white font-bold">{eva.titulo}</h5>
-                                                    <p className="text-xs text-slate-400">Evaluación Automática • {eva.Pregunta?.length || 0} Preguntas</p>
-
-                                                    {fueRendido && (
-                                                        <div className="mt-1 flex items-center gap-2">
-                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${calificacion.nota >= 60 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                                                                Nota: {calificacion.nota.toFixed(1)}/100
-                                                            </span>
-                                                            <span className="text-[10px] text-slate-500">Rendido el {new Date(calificacion.fecha).toLocaleDateString()}</span>
-                                                        </div>
-                                                    )}
+                                                    <h5 className="text-white font-medium text-sm group-hover:text-purple-300 transition-colors">{mat.titulo}</h5>
+                                                    <p className="text-xs text-slate-500 uppercase tracking-wider">{mat.tipo}</p>
                                                 </div>
                                             </div>
-
-                                            <div>
-                                                {!isInstructor && !fueRendido && (
-                                                    <button
-                                                        onClick={() => setSelectedEvaluacion(eva)}
-                                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-900/20 transition-transform active:scale-95"
-                                                    >
-                                                        <PlayCircle className="w-4 h-4" /> Comenzar
-                                                    </button>
-                                                )}
-                                                {!isInstructor && fueRendido && (
-                                                    <button className="text-slate-500 text-sm font-medium cursor-not-allowed">
-                                                        Completado
-                                                    </button>
-                                                )}
-                                                {isInstructor && (
-                                                    <div className="flex gap-2">
-                                                        <span className="text-xs text-slate-500 self-center mr-2">Visible para alumnos</span>
-                                                        <button className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><FileText className="w-4 h-4" /></button>
-                                                    </div>
-                                                )}
+                                        ))}
+                                        {unidad.Actividads?.map(act => (
+                                            <div key={act.id} className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-transparent border-l-2 border-purple-500">
+                                                <CheckSquare className="w-5 h-5 text-purple-400 ml-1" />
+                                                <div>
+                                                    <h5 className="text-white font-medium text-sm">{act.titulo}</h5>
+                                                    <p className="text-xs text-purple-300/60 font-mono mt-0.5">VENCE: {new Date(act.fechaEntrega).toLocaleDateString()}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    )
-                                })}
-                                {!unidad.Materials?.length && !unidad.Actividads?.length && !unidad.Evaluacions?.length && <p className="text-center text-slate-600 italic text-sm py-2">Unidad vacía</p>}
+                                        ))}
+                                        {unidad.Evaluacions?.map(eva => {
+                                            const calificacion = misCalificaciones.find(c => c.EvaluacionId === eva.id);
+                                            const fueRendido = !!calificacion;
+
+                                            return (
+                                                <div key={eva.id} className={`flex items-center justify-between p-4 rounded-lg border-l-4 ${fueRendido ? (calificacion.nota >= 60 ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5') : 'border-purple-500 bg-purple-500/10'}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${fueRendido ? 'bg-slate-800' : 'bg-purple-600'}`}>
+                                                            <GraduationCap className={`w-5 h-5 ${fueRendido ? (calificacion.nota >= 60 ? 'text-green-400' : 'text-red-400') : 'text-white'}`} />
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="text-white font-bold">{eva.titulo}</h5>
+                                                            <p className="text-xs text-slate-400">Evaluación Automática • {eva.Pregunta?.length || 0} Preguntas</p>
+
+                                                            {fueRendido && (
+                                                                <div className="mt-1 flex items-center gap-2">
+                                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${calificacion.nota >= 60 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                                                        Nota: {calificacion.nota.toFixed(1)}/100
+                                                                    </span>
+                                                                    <span className="text-[10px] text-slate-500">Rendido el {new Date(calificacion.fecha).toLocaleDateString()}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        {!isInstructor && !fueRendido && (
+                                                            <button
+                                                                onClick={() => setSelectedEvaluacion(eva)}
+                                                                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-900/20 transition-transform active:scale-95"
+                                                            >
+                                                                <PlayCircle className="w-4 h-4" /> Comenzar
+                                                            </button>
+                                                        )}
+                                                        {!isInstructor && fueRendido && (
+                                                            <button className="text-slate-500 text-sm font-medium cursor-not-allowed">
+                                                                Completado
+                                                            </button>
+                                                        )}
+                                                        {isInstructor && (
+                                                            <div className="flex gap-2">
+                                                                <span className="text-xs text-slate-500 self-center mr-2">Visible para alumnos</span>
+                                                                <button className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><FileText className="w-4 h-4" /></button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                        {!unidad.Materials?.length && !unidad.Actividads?.length && !unidad.Evaluacions?.length && <p className="text-center text-slate-600 italic text-sm py-2">Unidad vacía</p>}
+                                    </div>
+                                </div>
+                            ))}
+                            {!curso.Unidads?.length && <div className="text-center py-12 text-slate-500">No hay contenido todavía.</div>}
+
+                            {selectedEvaluacion && (
+                                <EvaluacionPlayer
+                                    evaluacion={selectedEvaluacion}
+                                    alumnoId={user.id}
+                                    onFinish={handleEvaluationFinish}
+                                    onClose={() => setSelectedEvaluacion(null)}
+                                />
+                            )}
+                        </div>
+                    )}
+
+                    {/* TAB: ALUMNOS */}
+                    {activeTab === 'alumnos' && isInstructor && (
+                        <div className="animate-in fade-in duration-300">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-white">Listado de Alumnos</h3>
+                                <button onClick={() => setShowEnrollModal(true)} className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                                    <Users className="w-4 h-4" />
+                                    Inscribir Alumno
+                                </button>
+                            </div>
+
+                            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-800/50 border-b border-white/10 text-xs uppercase text-slate-400 tracking-wider">
+                                            <th className="p-4 font-bold">Alumno (Email)</th>
+                                            <th className="p-4 font-bold">Fecha Inscripción</th>
+                                            <th className="p-4 font-bold">Calificación Final</th>
+                                            <th className="p-4 font-bold text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5 text-sm text-slate-300">
+                                        {curso.Inscripcions && curso.Inscripcions.map((ins) => (
+                                            <tr key={ins.id} className="hover:bg-white/5 transition-colors">
+                                                <td className="p-4 font-medium text-white">{ins.alumnoEmail}</td>
+                                                <td className="p-4">{new Date(ins.fechaInscripcion).toLocaleDateString()}</td>
+                                                <td className="p-4">
+                                                    {ins.calificacionFinal ? (
+                                                        <span className="inline-block px-2 py-1 rounded bg-green-500/20 text-green-400 font-bold border border-green-500/30">
+                                                            {ins.calificacionFinal}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-slate-500 italic">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <button className="text-purple-400 hover:text-purple-300 font-medium">Calificar</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {!curso.Inscripcions?.length && (
+                                            <tr>
+                                                <td colSpan="4" className="p-8 text-center text-slate-500">No hay alumnos inscriptos en este curso.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    ))}
-                    {!curso.Unidads?.length && <div className="text-center py-12 text-slate-500">No hay contenido todavía.</div>}
-
-                    {selectedEvaluacion && (
-                        <EvaluacionPlayer
-                            evaluacion={selectedEvaluacion}
-                            alumnoId={user.id}
-                            onFinish={handleEvaluationFinish}
-                            onClose={() => setSelectedEvaluacion(null)}
-                        />
                     )}
                 </div>
-            )}
 
-            {/* TAB: ALUMNOS */}
-            {activeTab === 'alumnos' && isInstructor && (
-                <div className="animate-in fade-in duration-300">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-white">Listado de Alumnos</h3>
-                        <button onClick={() => setShowEnrollModal(true)} className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
-                            <Users className="w-4 h-4" />
-                            Inscribir Alumno
-                        </button>
+                {/* Sidebar Column (Right) */}
+                <div className="space-y-6">
+                    {/* Calendar Widget for Upcoming Deadlines */}
+                    <div className="bg-slate-800/50 border border-white/10 rounded-xl p-5 shadow-lg lg:sticky lg:top-24">
+                        <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-2">
+                            <Calendar className="w-5 h-5 text-cyan-400" />
+                            <h3 className="font-bold text-white text-lg">Próximos Vencimientos</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {(() => {
+                                const allActivities = curso.Unidads?.flatMap(u => u.Actividads || []) || [];
+                                const upcoming = allActivities
+                                    .filter(a => new Date(a.fechaEntrega) >= new Date())
+                                    .sort((a, b) => new Date(a.fechaEntrega) - new Date(b.fechaEntrega))
+                                    .slice(0, 3);
+
+                                if (upcoming.length === 0) return <p className="text-slate-500 text-sm italic py-2">No hay entregas próximas.</p>;
+
+                                return upcoming.map(act => (
+                                    <div key={act.id} className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-lg border border-white/5 transition-colors hover:bg-slate-900">
+                                        <div className="bg-purple-500/10 p-2 rounded text-center min-w-[50px]">
+                                            <p className="text-xs font-bold text-purple-400 uppercase">{new Date(act.fechaEntrega).toLocaleString('default', { month: 'short' }).slice(0, 3)}</p>
+                                            <p className="text-xl font-bold text-white leading-none">{new Date(act.fechaEntrega).getDate()}</p>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-white font-medium text-sm line-clamp-1" title={act.titulo}>{act.titulo}</p>
+                                            <p className="text-xs text-slate-400">Vence en {Math.ceil((new Date(act.fechaEntrega) - new Date()) / (1000 * 60 * 60 * 24))} días</p>
+                                        </div>
+                                    </div>
+                                ));
+                            })()}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-white/5 text-center">
+                            <button className="text-xs text-cyan-400 hover:text-cyan-300 font-bold uppercase tracking-wider transition-colors">
+                                Ver Calendario Completo
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-800/50 border-b border-white/10 text-xs uppercase text-slate-400 tracking-wider">
-                                    <th className="p-4 font-bold">Alumno (Email)</th>
-                                    <th className="p-4 font-bold">Fecha Inscripción</th>
-                                    <th className="p-4 font-bold">Calificación Final</th>
-                                    <th className="p-4 font-bold text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5 text-sm text-slate-300">
-                                {curso.Inscripcions && curso.Inscripcions.map((ins) => (
-                                    <tr key={ins.id} className="hover:bg-white/5 transition-colors">
-                                        <td className="p-4 font-medium text-white">{ins.alumnoEmail}</td>
-                                        <td className="p-4">{new Date(ins.fechaInscripcion).toLocaleDateString()}</td>
-                                        <td className="p-4">
-                                            {ins.calificacionFinal ? (
-                                                <span className="inline-block px-2 py-1 rounded bg-green-500/20 text-green-400 font-bold border border-green-500/30">
-                                                    {ins.calificacionFinal}
-                                                </span>
-                                            ) : (
-                                                <span className="text-slate-500 italic">-</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <button className="text-purple-400 hover:text-purple-300 font-medium">Calificar</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {!curso.Inscripcions?.length && (
-                                    <tr>
-                                        <td colSpan="4" className="p-8 text-center text-slate-500">No hay alumnos inscriptos en este curso.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                    {isInstructor && (
+                        <div className="bg-slate-800/50 border border-white/10 rounded-xl p-5 shadow-lg">
+                            <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Estadísticas</h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400 text-sm">Alumnos Inscriptos</span>
+                                    <span className="text-white font-bold">{curso.Inscripcions?.length || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400 text-sm">Total Unidades</span>
+                                    <span className="text-white font-bold">{curso.Unidads?.length || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
 
             {/* Modal Inscripción */}
             {showEnrollModal && (
