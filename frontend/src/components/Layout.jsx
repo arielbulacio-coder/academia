@@ -131,8 +131,10 @@ const Layout = ({ children, user, handleLogout }) => {
             )}
 
             {/* Main Content Area */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-br from-slate-900 to-slate-800">
-                {children}
+            <main className="flex-1 md:ml-64 min-h-screen w-full relative overflow-x-hidden">
+                <div className="p-4 md:p-8 pt-20 md:pt-8 w-full max-w-[100vw] box-border bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
+                    {children}
+                </div>
             </main>
         </div>
     );
