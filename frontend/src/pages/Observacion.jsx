@@ -23,10 +23,16 @@ const Observacion = ({ user }) => {
         metodologiaABP: false,
         comentarios: '',
         itemsEvaluacion: {
+            puntualidad: 3,
+            presentacionPersonal: 3,
             planificacion: 3,
             dominioGrupo: 3,
             usoRecursos: 3,
-            climaAulico: 3
+            climaAulico: 3,
+            estrategiasDidacticas: 3,
+            claridadExpositiva: 3,
+            participacionAlumnos: 3,
+            cierreClase: 3
         }
     });
 
