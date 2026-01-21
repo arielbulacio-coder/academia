@@ -11,7 +11,7 @@ const Curso = sequelize.define('Curso', {
         allowNull: true
     },
     imagen: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: true
     },
     finalizado: {

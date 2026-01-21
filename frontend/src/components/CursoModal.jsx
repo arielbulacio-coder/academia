@@ -206,23 +206,65 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
 
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">
-                            URL de Imagen (opcional)
+                            Imagen de Portada
                         </label>
-                        <input
-                            type="url"
-                            value={formData.imagen}
-                            onChange={(e) => setFormData({ ...formData, imagen: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
-                            placeholder="https://ejemplo.com/imagen.jpg"
-                        />
-                        {formData.imagen && (
-                            <img
-                                src={formData.imagen}
-                                alt="Preview"
-                                className="mt-3 w-full h-32 object-cover rounded-lg"
-                                onError={(e) => e.target.style.display = 'none'}
-                            />
-                        )}
+
+                        <div className="space-y-3">
+                            {/* File Upload */}
+                            <div className="relative group">
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer bg-slate-900/50 hover:bg-slate-800 hover:border-purple-500 transition-all">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg className="w-8 h-8 mb-2 text-slate-400 group-hover:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                        <p className="text-xs text-slate-400 group-hover:text-white">Click para subir imagen (PNG, JPG)</p>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/png, image/jpeg, image/jpg"
+                                        onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setFormData({ ...formData, imagen: reader.result });
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            </div>
+
+                            {/* URL Input Fallback */}
+                            <div>
+                                <input
+                                    type="url"
+                                    value={formData.imagen.startsWith('data:') ? '' : formData.imagen}
+                                    onChange={(e) => setFormData({ ...formData, imagen: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-xs"
+                                    placeholder="O pegar URL de imagen externa..."
+                                />
+                            </div>
+
+                            {/* Preview */}
+                            {formData.imagen && (
+                                <div className="relative w-full h-40 rounded-lg overflow-hidden border border-white/10 group">
+                                    <img
+                                        src={formData.imagen}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => e.target.style.display = 'none'}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, imagen: '' })}
+                                        className="absolute top-2 right-2 p-1 bg-red-500/80 rounded-full text-white hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex gap-3 pt-4">
