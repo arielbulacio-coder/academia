@@ -151,6 +151,9 @@ function App() {
       <div className="relative w-full max-w-md">
         {/* Header Branding */}
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <img src="/logo.png" alt="ETPIA" className="h-24 w-auto object-contain drop-shadow-2xl" />
+          </div>
           <h1 className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight mb-2">
             Academia Técnico Profesional
           </h1>

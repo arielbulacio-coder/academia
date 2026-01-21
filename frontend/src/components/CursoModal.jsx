@@ -71,9 +71,13 @@ const CursoModal = ({ isOpen, onClose, onSuccess, user, onCourseCreated, initial
         }
 
         try {
+            const token = localStorage.getItem('token');
             const res = await fetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     ...formData,
                     duracion_horas: parseInt(formData.duracion_horas) || 0,

@@ -80,7 +80,13 @@ const Cursos = () => {
         }
 
         try {
-            const res = await fetch(url, { method: 'DELETE' });
+            const token = localStorage.getItem('token');
+            const res = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (res.ok) {
                 fetchCursos(); // Reload
             } else {
