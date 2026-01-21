@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as builder
+FROM public.ecr.aws/docker/library/node:18-alpine as builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
@@ -10,7 +10,7 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Production stage
-FROM nginx:latest
+FROM public.ecr.aws/nginx/nginx:latest
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
