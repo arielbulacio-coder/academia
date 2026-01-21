@@ -9,6 +9,7 @@ import { getApiUrl } from '../utils/api';
 const Cursos = () => {
     const [cursos, setCursos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [user, setUser] = useState(null); // Local user state needed to check role
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [cursoToEdit, setCursoToEdit] = useState(null); // Course to edit
@@ -57,6 +58,7 @@ const Cursos = () => {
             }
         } catch (error) {
             console.error("Error fetching courses", error);
+            setError(error.message);
         } finally {
             setLoading(false);
         }
@@ -123,6 +125,12 @@ const Cursos = () => {
                     </button>
                 )}
             </div>
+
+            {error && (
+                <div className="mb-4 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-200">
+                    Error cargando cursos: {error}
+                </div>
+            )}
 
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
