@@ -672,6 +672,183 @@ app.post('/cursos/:id/importar', async (req, res) => {
 });
 
 
+
+// 7. GENERACION DE MATERIAL DIDACTICO PDF + EVALUACION (AI)
+app.post('/cursos/:cursoId/unidades/:unidadId/generar-material-pdf', async (req, res) => {
+    const { cursoId, unidadId } = req.params;
+    const {
+        topic,
+        pages,
+        includeMultipleChoice,
+        includeFinalExam,
+        apiKey
+    } = req.body;
+
+    const finalKey = apiKey || process.env.GEMINI_API_KEY;
+    if (!finalKey) return res.status(400).json({ message: 'API Key requerida' });
+
+    try {
+        const unidad = await Unidad.findOne({ where: { id: unidadId, CursoId: cursoId } });
+        if (!unidad) return res.status(404).json({ message: 'Unidad no encontrada' });
+
+        const genAI = new GoogleGenerativeAI(finalKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+        Actúa como un experto docente y creador de contenido educativo.
+        Tu tarea es generar un Material Didáctico y (opcionalmente) Evaluaciones para un curso de formación profesional.
+        Tema del Material: "${topic}"
+        Longitud aproximada: ${pages} páginas de contenido (aprox 400 palabras por página).
+
+        REQUISITOS DEL MATERIAL:
+        1. Utiliza fuentes de información reconocidas, técnicas y verificables.
+        2. El tono debe ser formal, educativo y técnico.
+        3. Estructura el contenido con: Título, Introducción, Desarrollo (Subtítulos claros) y Conclusión.
+        
+        ${includeMultipleChoice ? `
+        REQUISITOS EVALUACIÓN PARCIAL (Multiple Choice):
+        - 5 Preguntas sobre el texto generado.
+        - 4 opciones por pregunta, 1 correcta.
+        ` : ''}
+
+        ${includeFinalExam ? `
+        REQUISITOS EVALUACIÓN FINAL (Examen):
+        - 10 Preguntas exhaustivas sobre el tema.
+        - 4 opciones por pregunta, 1 correcta.
+        ` : ''}
+
+        FORMATO DE SALIDA (JSON PURO):
+        Devuelve SOLO un objeto JSON con esta estructura exacta sin markdown fences:
+        {
+            "titulo": "Título Sugerido",
+            "contenido": "Texto completo del material... (usa saltos de línea \\n para párrafos)",
+            "evaluacionParcial": [
+                { "enunciado": "...", "opciones": [{"texto": "...", "esCorrecta": true/false}, ...] }
+            ],
+            "evaluacionFinal": [
+                { "enunciado": "...", "opciones": [{"texto": "...", "esCorrecta": true/false}, ...] }
+            ]
+        }
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        let data;
+        try {
+            data = JSON.parse(jsonStr);
+        } catch (e) {
+            console.error("AI JSON Parse Error", text);
+            return res.status(500).json({ message: 'Error procesando respuesta de IA', raw: text });
+        }
+
+        // Generate PDF
+        const doc = new PDFDocument();
+        const buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+
+        doc.fontSize(20).text(data.titulo, { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(data.contenido, { align: 'justify', columns: 1 });
+        doc.end();
+
+        const pdfBuffer = await new Promise(resolve => {
+            doc.on('end', () => resolve(Buffer.concat(buffers)));
+        });
+
+        const pdfBase64 = `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
+
+        const material = await Material.create({
+            titulo: data.titulo,
+            tipo: 'pdf',
+            contenido: pdfBase64,
+            descripcion: `Material generado por IA sobre: ${topic}. ${pages} páginas.`,
+            UnidadId: unidad.id
+        });
+
+        let evals = [];
+        if (data.evaluacionParcial && data.evaluacionParcial.length > 0) {
+            const eva = await Evaluacion.create({
+                titulo: `Evaluación Parcial: ${data.titulo}`,
+                descripcion: 'Autogenerada por IA',
+                UnidadId: unidad.id
+            });
+            evals.push(eva);
+            for (const p of data.evaluacionParcial) {
+                const preg = await Pregunta.create({ enunciado: p.enunciado, EvaluacionId: eva.id });
+                for (const o of p.opciones) {
+                    await Opcion.create({ texto: o.texto, esCorrecta: o.esCorrecta, PreguntaId: preg.id });
+                }
+            }
+        }
+
+        if (data.evaluacionFinal && data.evaluacionFinal.length > 0) {
+            const eva = await Evaluacion.create({
+                titulo: `Examen Final: ${data.titulo}`,
+                descripcion: 'Autogenerada por IA',
+                UnidadId: unidad.id
+            });
+            evals.push(eva);
+            for (const p of data.evaluacionFinal) {
+                const preg = await Pregunta.create({ enunciado: p.enunciado, EvaluacionId: eva.id });
+                for (const o of p.opciones) {
+                    await Opcion.create({ texto: o.texto, esCorrecta: o.esCorrecta, PreguntaId: preg.id });
+                }
+            }
+        }
+
+        res.json({ message: 'Material generado correctamente', material, evaluations: evals });
+
+    } catch (err) {
+        console.error("AI Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 8. CALIFICAR EVALUACION (Auto-corrección)
+app.post('/evaluaciones/:id/entregar', async (req, res) => {
+    const { respuestas, alumnoId } = req.body;
+    try {
+        const evaluacion = await Evaluacion.findByPk(req.params.id, {
+            include: [{ model: Pregunta, include: [Opcion] }]
+        });
+        if (!evaluacion) return res.status(404).json({ message: 'Evaluación no encontrada' });
+
+        let correctas = 0;
+        let total = evaluacion.Pregunta.length;
+        let detalles = [];
+
+        evaluacion.Pregunta.forEach(preg => {
+            const selectedOptionId = respuestas[preg.id];
+            const correctOption = preg.Opcions.find(o => o.esCorrecta);
+
+            const isCorrect = correctOption && (String(correctOption.id) === String(selectedOptionId));
+            if (isCorrect) correctas++;
+
+            detalles.push({
+                preguntaId: preg.id,
+                correcta: isCorrect
+            });
+        });
+
+        const nota = total > 0 ? (correctas / total) * 100 : 0;
+
+        const calificacion = await Calificacion.create({
+            AlumnoId: alumnoId || 1,
+            EvaluacionId: evaluacion.id,
+            nota: Math.round(nota),
+            detalles: detalles
+        });
+
+        res.json({ nota: Math.round(nota), calificacion });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Health check
 app.get('/', async (req, res) => {
     try {

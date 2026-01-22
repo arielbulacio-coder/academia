@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud, Users, GraduationCap, X, PlayCircle, Calendar } from 'lucide-react';
+import { FileText, Video, Link as LinkIcon, File, PlusCircle, CheckSquare, UploadCloud, Users, GraduationCap, X, PlayCircle, Calendar, Sparkles, BrainCircuit } from 'lucide-react';
 import EvaluacionPlayer from '../components/EvaluacionPlayer';
 
 const CourseDetail = ({ user }) => {
@@ -17,6 +17,17 @@ const CourseDetail = ({ user }) => {
     const [enrollEmail, setEnrollEmail] = useState('');
 
     const [enrollLoading, setEnrollLoading] = useState(false);
+
+    // AI Generation State
+    const [showAIModal, setShowAIModal] = useState(false);
+    const [selectedUnitId, setSelectedUnitId] = useState(null);
+    const [generatingAI, setGeneratingAI] = useState(false);
+    const [aiParams, setAiParams] = useState({
+        topic: '',
+        pages: 3,
+        includeMultipleChoice: true,
+        includeFinalExam: false
+    });
 
     // Exams
     const [selectedEvaluacion, setSelectedEvaluacion] = useState(null);
@@ -125,6 +136,31 @@ const CourseDetail = ({ user }) => {
         }
     };
 
+    const handleGenerateAI = async (e) => {
+        e.preventDefault();
+        setGeneratingAI(true);
+        try {
+            const res = await fetch(`${getBaseUrl()}/cursos/${id}/unidades/${selectedUnitId}/generar-material-pdf`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(aiParams)
+            });
+            if (res.ok) {
+                alert('Material generado con éxito!');
+                setShowAIModal(false);
+                setAiParams({ topic: '', pages: 3, includeMultipleChoice: true, includeFinalExam: false });
+                fetchCurso();
+            } else {
+                alert('Error generando material. Verifique los logs.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error al conectar con la IA');
+        } finally {
+            setGeneratingAI(false);
+        }
+    };
+
     if (loading) return <div className="text-white p-8">Cargando aula virtual...</div>;
     if (!curso) return <div className="text-white p-8">Curso no encontrado.</div>;
 
@@ -202,6 +238,13 @@ const CourseDetail = ({ user }) => {
                                         {isInstructor && (
                                             <div className="flex gap-2">
                                                 <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Subir Material"><UploadCloud className="w-4 h-4" /></button>
+                                                <button
+                                                    onClick={() => { setSelectedUnitId(unidad.id); setShowAIModal(true); }}
+                                                    className="p-1.5 hover:bg-white/10 rounded-lg text-pink-400 hover:text-pink-300 transition-colors"
+                                                    title="Generar con IA"
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
+                                                </button>
                                                 <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Crear Actividad"><CheckSquare className="w-4 h-4" /></button>
                                             </div>
                                         )}
@@ -459,6 +502,93 @@ const CourseDetail = ({ user }) => {
                                 <button type="button" onClick={() => setShowUnitModal(false)} className="px-4 py-2 text-slate-300 hover:bg-white/5 rounded-lg">Cancelar</button>
                                 <button type="submit" disabled={creatingUnit} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold shadow-lg shadow-purple-900/20">
                                     {creatingUnit ? 'Creando...' : 'Crear Unidad'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Generación IA */}
+            {showAIModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-slate-900 border border-purple-500/30 rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 bg-purple-600/20 rounded-lg">
+                                    <BrainCircuit className="w-6 h-6 text-purple-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Generar Contenido IA</h3>
+                                    <p className="text-xs text-slate-400">Powered by Gemini</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowAIModal(false)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleGenerateAI} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Tema del Material</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ej. Introducción a la Inteligencia Artificial"
+                                    value={aiParams.topic}
+                                    onChange={(e) => setAiParams({ ...aiParams, topic: e.target.value })}
+                                    className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-slate-600"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Cantidad de Hojas (Aprox)</label>
+                                <div className="flex items-center gap-4">
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="10"
+                                        value={aiParams.pages}
+                                        onChange={(e) => setAiParams({ ...aiParams, pages: parseInt(e.target.value) })}
+                                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                    <span className="text-white font-bold w-8 text-center">{aiParams.pages}</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-white/5 space-y-3">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={aiParams.includeMultipleChoice}
+                                        onChange={(e) => setAiParams({ ...aiParams, includeMultipleChoice: e.target.checked })}
+                                        className="w-5 h-5 rounded border-gray-600 text-purple-600 focus:ring-purple-600 bg-slate-700"
+                                    />
+                                    <span className="text-sm text-slate-300">Incluir Evaluación Parcial (Multiple Choice)</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={aiParams.includeFinalExam}
+                                        onChange={(e) => setAiParams({ ...aiParams, includeFinalExam: e.target.checked })}
+                                        className="w-5 h-5 rounded border-gray-600 text-purple-600 focus:ring-purple-600 bg-slate-700"
+                                    />
+                                    <span className="text-sm text-slate-300">Incluir Examen Final</span>
+                                </label>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-4">
+                                <button type="button" onClick={() => setShowAIModal(false)} className="px-4 py-2 text-slate-300 hover:bg-white/5 rounded-lg">Cancelar</button>
+                                <button
+                                    type="submit"
+                                    disabled={generatingAI}
+                                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-bold shadow-lg shadow-purple-900/20 flex items-center gap-2"
+                                >
+                                    {generatingAI ? (
+                                        <>
+                                            <Sparkles className="w-4 h-4 animate-spin" /> Generando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-4 h-4" /> Generar Material
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>
